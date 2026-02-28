@@ -3434,9 +3434,90 @@
     }
 
     .row-pulse-update {
-      animation: rowPulseUpdate 3.5s ease-out forwards !important;
+      animation: rowPulseDelete 3.5s ease-out forwards !important;
     }
 
-    .row-pulse-delete {
-      animation: rowPulseDelete 3.5s ease-out forwards !important;
+    /* Sticker Modal & Preview */
+    .sticker-preview-box {
+      background: #f8f9fa;
+      padding: 20px;
+      border-radius: 8px;
+      display: flex;
+      justify-content: center;
+      border: 1px dashed #ced4da;
+    }
+
+    .sticker-mockup {
+      width: 80mm;
+      height: 100mm;
+      background: #fff;
+      border: 1px solid #000;
+      padding: 5mm;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      font-family: 'Prompt', sans-serif;
+      box-sizing: border-box;
+      transform: scale(0.85); /* Slightly scale down for modal view */
+      transform-origin: top center;
+    }
+
+    .sticker-mockup-header {
+      text-align: center;
+      font-weight: 800;
+      font-size: 16px;
+      border-bottom: 2px solid #000;
+      padding-bottom: 5px;
+      margin-bottom: 10px;
+    }
+
+    .sticker-mockup-ticket {
+      font-size: 22px;
+      font-weight: 900;
+      text-align: center;
+      margin: 10px 0;
+      padding: 8px;
+      background: #f0f0f0;
+      border: 1px solid #ddd;
+    }
+
+    .sticker-mockup-field {
+      font-size: 13px;
+      margin-bottom: 4px;
+      line-height: 1.4;
+    }
+
+    .sticker-mockup-field strong {
+      display: inline-block;
+      width: 70px;
+    }
+
+    .sticker-mockup-field.description-field {
+      flex: 1;
+      overflow: hidden;
+      margin-top: 5px;
+    }
+
+    .sticker-mockup-footer {
+      border-top: 1px solid #000;
+      padding-top: 8px;
+      margin-top: 8px;
+      font-size: 13px;
+    }
+
+    .dark-theme .sticker-preview-box {
+      background: #2d2d2d;
+      border-color: #444;
+    }
+
+    .dark-theme .sticker-mockup {
+      background: #fff; /* Sticker is always white regardless of theme */
+      color: #000;
+    }
+
+    /* Print Adjustments */
+    @media print {
+      .app-content, .modal, .modal-content {
+        display: none !important;
+      }
     }

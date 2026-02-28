@@ -8,7 +8,7 @@ import DashboardCards from './components/DashboardCards';
 import AnalyticsCards from './components/AnalyticsCards';
 import ControlPanel from './components/ControlPanel';
 import DataTable from './components/DataTable';
-import { DetailModal, ActionModal, GraphModal, SummaryModal, SpareSummaryModal, OutsideRequestModal } from './components/Modals';
+import { DetailModal, ActionModal, GraphModal, SummaryModal, SpareSummaryModal, OutsideRequestModal, StickerModal } from './components/Modals';
 import { PoDetailsModal, PrDetailsModal, OtherPlantModal, StatusEditModal, ProjectModal, TimelineModal } from './components/TableModals';
 
 import { useAppData } from './hooks/useAppData';
@@ -68,6 +68,7 @@ function App() {
   const [projectModal, setProjectModal] = useState({ open: false, row: null });
   const [timelineModal, setTimelineModal] = useState({ open: false, row: null });
   const [outsideRequestModal, setOutsideRequestModal] = useState({ open: false, row: null });
+  const [stickerModal, setStickerModal] = useState({ open: false, row: null });
 
   const handleSort = (key) => {
     let direction = 'asc';
@@ -167,6 +168,7 @@ function App() {
     }
     setOutsideRequestModal({ open: true, row });
   };
+  const handleTicketClick = (row) => setStickerModal({ open: true, row });
 
   // After status edit save, refresh data optimistically
   const handleStatusEditSaved = (actionType, ticket, material, newStatus) => {
@@ -294,6 +296,7 @@ function App() {
             onStatusGroupClick={handleStatusGroupClick}
             onDetailClick={handleDetailClick}
             onNawaClick={handleNawaClick}
+            onTicketClick={handleTicketClick}
           />
 
           <GraphModal
@@ -378,6 +381,11 @@ function App() {
                 throw err;
               }
             }}
+          />
+          <StickerModal
+            isOpen={stickerModal.open}
+            onClose={() => setStickerModal({ open: false, row: null })}
+            row={stickerModal.row}
           />
         </div>
       )}

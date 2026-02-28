@@ -35,6 +35,9 @@ const plantStockSheetID = '1OtcgbmQdrI3gKJCGiDge6xuOsrT0GPxdKeFPjpvK3Rg';
 const plantStockSheetName = 'Sheet1';
 export const plantStockUrl = `https://opensheet.elk.sh/${plantStockSheetID}/${plantStockSheetName}`;
 
+const updateSheetName = 'Update';
+export const updateUrl = `https://opensheet.elk.sh/${sheetID}/${updateSheetName}`;
+
 export const newPartLoadUrl = "https://opensheet.elk.sh/1R8X9yVZBzOc1eDPJU0stKLjVSygMusJihtprdOtb6sE/NewPart";
 export const projectLogLoadUrl = "https://opensheet.elk.sh/1R8X9yVZBzOc1eDPJU0stKLjVSygMusJihtprdOtb6sE/ProjectLog";
 export const newPartSaveUrl = "https://script.google.com/macros/s/AKfycbxQa5PmKWZzjx67H4-mw8IslNK0g9y1_XsAAlk5SOZcuJLsEpyA07X5riUyR8diaSA/exec";
@@ -108,7 +111,8 @@ export async function fetchAllData() {
         () => fetchWithTimeout(nawaUrl, { cache: 'no-store' }).then(safeJson),
         () => fetchWithTimeout(plantStockUrl, { cache: 'no-store' }).then(safeJson),
         () => fetchWithTimeout(newPartLoadUrl, { cache: 'no-store' }).then(safeJson),
-        () => fetchWithTimeout(projectLogLoadUrl, { cache: 'no-store' }).then(safeJson)
+        () => fetchWithTimeout(projectLogLoadUrl, { cache: 'no-store' }).then(safeJson),
+        () => fetchWithTimeout(updateUrl, { cache: 'no-store' }).then(safeJson)
     ];
 
     // Batch to not starve connections
@@ -144,7 +148,8 @@ export async function fetchAllData() {
         nawaData: safeResult(6, 'nawaData'),
         plantStockData: safeResult(7, 'plantStockData'),
         newPartData: safeResult(8, 'newPartData'),
-        projectData: safeResult(9, 'projectData')
+        projectData: safeResult(9, 'projectData'),
+        updateData: safeResult(10, 'updateData')
     };
 }
 

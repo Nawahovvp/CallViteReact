@@ -48,7 +48,8 @@ export default function DataTable({
     onStatusXClick,
     onStatusGroupClick,
     onDetailClick,
-    onNawaClick
+    onNawaClick,
+    onTicketClick
 }) {
     const dataWithGroup = React.useMemo(() => {
         let lastTicket = null;
@@ -130,7 +131,12 @@ export default function DataTable({
                                         <td data-column="Team">{row['Team']}</td>
                                         <td data-column="TeamPlant">{cleanTeamPlant(row['TeamPlant'])}</td>
                                         <td data-column="ค้างหน่วยงาน">{row['ค้างหน่วยงาน']}</td>
-                                        <td data-column="Ticket Number">{row['Ticket Number']}</td>
+                                        <td data-column="Ticket Number">
+                                            <span style={{ cursor: 'pointer', textDecoration: 'underline', color: '#0d6efd', fontWeight: 'bold' }}
+                                                onClick={(e) => { e.stopPropagation(); onTicketClick?.(row); }}>
+                                                {row['Ticket Number']}
+                                            </span>
+                                        </td>
                                         <td data-column="Material">{row['Material']}</td>
                                         <td data-column="Description">{row['Description']}</td>
                                         {/* Rebuilt */}

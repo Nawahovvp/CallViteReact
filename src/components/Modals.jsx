@@ -873,3 +873,151 @@ export function OutsideRequestModal({ isOpen, onClose, row, onSubmit }) {
         </div>
     );
 }
+
+// ===== Sticker Print Modal (80x100 mm) =====
+export function StickerModal({ isOpen, onClose, row }) {
+    if (!isOpen || !row) return null;
+
+    const handlePrint = () => {
+        const uniqueName = new Date().getTime();
+        const windowFeatures = 'left=0,top=0,width=800,height=900,toolbar=0,scrollbars=0,status=0';
+        const printWindow = window.open('about:blank', uniqueName, windowFeatures);
+
+        printWindow.document.write(`
+            <html>
+                <head>
+                    <title>Sticker Print - ${row["Ticket Number"]}</title>
+                    <style>
+                        @page {
+                            size: 80mm 100mm;
+                            margin: 0;
+                        }
+                        body {
+                            margin: 0;
+                            padding: 5mm;
+                            font-family: 'Prompt', sans-serif;
+                            width: 80mm;
+                            height: 100mm;
+                            box-sizing: border-box;
+                            display: flex;
+                            flex-direction: column;
+                        }
+                        .sticker-container {
+                            border: 1px solid #000;
+                            height: 100%;
+                            padding: 3mm;
+                            display: flex;
+                            flex-direction: column;
+                            gap: 2mm;
+                        }
+                        .header {
+                            text-align: center;
+                            font-weight: bold;
+                            font-size: 14pt;
+                            border-bottom: 2px solid #000;
+                            padding-bottom: 2mm;
+                            margin-bottom: 2mm;
+                        }
+                        .field {
+                            display: flex;
+                            margin-bottom: 1mm;
+                        }
+                        .label {
+                            font-weight: bold;
+                            width: 30mm;
+                            font-size: 10pt;
+                        }
+                        .value {
+                            flex: 1;
+                            font-size: 10pt;
+                            word-break: break-all;
+                        }
+                        .ticket-number {
+                            font-size: 16pt;
+                            font-weight: 800;
+                            text-align: center;
+                            margin: 2mm 0;
+                            padding: 2mm;
+                            background: #eee;
+                        }
+                        @media print {
+                            button { display: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="sticker-container">
+                        <div class="header">SPARE PART STICKER</div>
+                        <div class="ticket-number">${row["Ticket Number"]}</div>
+                        <div class="field">
+                            <div class="label">Brand:</div>
+                            <div class="value">${row["Brand"] || "-"}</div>
+                        </div>
+                        <div class="field">
+                            <div class="label">Team:</div>
+                            <div class="value">${row["Team"] || "-"}</div>
+                        </div>
+                        <div class="field">
+                            <div class="label">Material:</div>
+                            <div class="value">${row["Material"]}</div>
+                        </div>
+                        <div class="field" style="flex: 1;">
+                            <div class="label">Description:</div>
+                            <div class="value">${getDesc(row)}</div>
+                        </div>
+                        <div class="field" style="border-top: 1px solid #000; padding-top: 2mm;">
+                            <div class="label">ศูนย์พื้นที่:</div>
+                            <div class="value">${getCleanTeamPlant(row["TeamPlant"])}</div>
+                        </div>
+                    </div>
+                </body>
+            </html>
+        `);
+        printWindow.document.close();
+        printWindow.focus();
+        setTimeout(() => {
+            printWindow.print();
+            printWindow.close();
+        }, 250);
+    };
+
+    return (
+        <div className="modal" onClick={(e) => e.target.className === 'modal' && onClose()}>
+            <div className="modal-content sticker-modal-content" style={{ maxWidth: '400px' }}>
+                <span className="close" onClick={onClose}>×</span>
+                <h3 style={{ textAlign: 'center', marginBottom: '20px' }}>ตัวอย่างสติกเกอร์ (80x100 mm)</h3>
+
+                <div id="sticker-preview" className="sticker-preview-box">
+                    <div className="sticker-mockup">
+                        <div className="sticker-mockup-header">SPARE PART STICKER</div>
+                        <div className="sticker-mockup-ticket">{row["Ticket Number"]}</div>
+                        <div className="sticker-mockup-field">
+                            <strong>Brand:</strong> {row["Brand"] || "-"}
+                        </div>
+                        <div className="sticker-mockup-field">
+                            <strong>Team:</strong> {row["Team"] || "-"}
+                        </div>
+                        <div className="sticker-mockup-field">
+                            <strong>Material:</strong> {row["Material"]}
+                        </div>
+                        <div className="sticker-mockup-field description-field">
+                            <strong>Desc:</strong> {getDesc(row)}
+                        </div>
+                        <div className="sticker-mockup-footer">
+                            <strong>ศูนย์พื้นที่:</strong> {getCleanTeamPlant(row["TeamPlant"])}
+                        </div>
+                    </div>
+                </div>
+
+                <div style={{ marginTop: '20px', display: 'flex', gap: '10px' }}>
+                    <button className="action-button" style={{ flex: 1, backgroundColor: 'var(--success-color)' }} onClick={handlePrint}>
+                        <i className="fas fa-print"></i> พิมพ์สติกเกอร์
+                    </button>
+                    <button className="action-button logout-button" style={{ flex: 1 }} onClick={onClose}>
+                        <i className="fas fa-times"></i> ปิด
+                    </button>
+                </div>
+            </div>
+        </div>
+    );
+}

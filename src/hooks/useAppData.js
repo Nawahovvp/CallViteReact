@@ -31,11 +31,41 @@ export function useAppData() {
                 nawaData,
                 plantStockData,
                 newPartData,
-                projectData
+                projectData,
+                updateData
             } = await fetchAllData();
 
             const now = new Date();
-            setLastUpdated(now.toLocaleString('th-TH'));
+            let latestUpdateStr = now.toLocaleString('th-TH');
+
+            if (Array.isArray(updateData) && updateData.length > 0) {
+                // Find the maximum date from the "Date" column
+                const dates = updateData
+                    .map(row => row.Date)
+                    .filter(d => d)
+                    .map(d => {
+                        // Handle date parsing (assuming DD/MM/YYYY or similar)
+                        const parts = d.split('/');
+                        if (parts.length === 3) {
+                            let day = parseInt(parts[0], 10);
+                            let month = parseInt(parts[1], 10) - 1;
+                            let year = parseInt(parts[2], 10);
+                            if (year < 2500) year += 543; // Convert to Buddhist Era if needed, or keep as is.
+                            // However, the original code used th-TH which is BE. 
+                            // Let's assume the sheet has standard dates or strings that we should just find the max of.
+                            // If they are strings like "28/02/2026", we need to parse them to compare.
+                            return { original: d, date: new Date(year > 2500 ? year - 543 : year, month, day) };
+                        }
+                        return null;
+                    })
+                    .filter(item => item && !isNaN(item.date.getTime()));
+
+                if (dates.length > 0) {
+                    const maxItem = dates.reduce((max, curr) => curr.date > max.date ? curr : max, dates[0]);
+                    latestUpdateStr = maxItem.original;
+                }
+            }
+            setLastUpdated(latestUpdateStr);
 
             const processed = processRawData(
                 mainData,

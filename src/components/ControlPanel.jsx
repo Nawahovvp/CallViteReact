@@ -31,9 +31,53 @@ function FilterButton({ label, count, isActive, onClick, textColor }) {
     );
 }
 
-function FilterRow({ label, id, options, activeValue, onSelect, useStatusColors }) {
+function FilterRow({ label, id, options, activeValue, onSelect, useStatusColors, isAreaCenter }) {
     // Sort by count descending
     const sorted = Object.entries(options || {}).sort((a, b) => b[1] - a[1]);
+
+    if (isAreaCenter) {
+        const nonSA = sorted.filter(([key]) => !key.startsWith('SA'));
+        const sa = sorted.filter(([key]) => key.startsWith('SA'));
+
+        return (
+            <div className="filter-row area-center-row">
+                <label className="modern-label" style={{ minWidth: '100px' }}>{label}</label>
+                <div className="filter-groups-container" style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+                    {/* Line 1: Normal buttons + All button */}
+                    <div className="filter-group" style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                        <FilterButton
+                            label="ทั้งหมด"
+                            isActive={!activeValue}
+                            onClick={() => onSelect('')}
+                        />
+                        {nonSA.map(([key, count]) => (
+                            <FilterButton
+                                key={key}
+                                label={key}
+                                count={count}
+                                isActive={activeValue === key}
+                                onClick={() => onSelect(activeValue === key ? '' : key)}
+                                textColor={useStatusColors ? STATUS_COLORS[key] : undefined}
+                            />
+                        ))}
+                    </div>
+                    {/* Line 2: SA buttons */}
+                    <div className="filter-group" style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
+                        {sa.map(([key, count]) => (
+                            <FilterButton
+                                key={key}
+                                label={key}
+                                count={count}
+                                isActive={activeValue === key}
+                                onClick={() => onSelect(activeValue === key ? '' : key)}
+                                textColor={useStatusColors ? STATUS_COLORS[key] : undefined}
+                            />
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="filter-row">
@@ -89,6 +133,7 @@ export default function ControlPanel({
                 options={availableFilters?.teamPlant}
                 activeValue={teamPlantFilter}
                 onSelect={onTeamPlantChange}
+                isAreaCenter={true}
             />
             <FilterRow
                 label="ค้างหน่วยงาน"
