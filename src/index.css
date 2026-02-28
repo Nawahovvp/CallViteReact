@@ -615,6 +615,11 @@
       text-align: left;
     }
 
+    td[data-column="Description"] {
+      color: #000 !important;
+      font-weight: normal !important;
+    }
+
     th[data-column="Answer1"],
     td[data-column="Answer1"] {
       width: 200px;

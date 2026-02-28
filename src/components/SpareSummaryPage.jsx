@@ -230,8 +230,8 @@ export default function SpareSummaryPage({ data = [], rawSources = {}, isLoading
     };
 
     return (
-        <div className="spare-page-container" style={{ padding: '20px', backgroundColor: 'var(--bg-color)', minHeight: '100vh' }}>
-            <div className="premium-modal-content" style={{ width: '100%', margin: '0', animation: 'none' }}>
+        <div className="spare-page-container" style={{ padding: '20px', backgroundColor: 'var(--bg-color)', height: '100vh', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
+            <div className="premium-modal-content" style={{ width: '100%', margin: '0', animation: 'none', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                 <div className="premium-modal-header">
                     <h3><i className="fas fa-list-alt" style={{ marginRight: 10 }}></i> สรุปรายการอะไหล่รอของเข้า (Standalone Page)</h3>
                     <div style={{ display: 'flex', gap: 10 }}>
@@ -242,7 +242,7 @@ export default function SpareSummaryPage({ data = [], rawSources = {}, isLoading
                     </div>
                 </div>
 
-                <div className="premium-modal-body">
+                <div className="premium-modal-body" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', paddingBottom: 0 }}>
                     {/* Filters & Actions Bar */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 15 }}>
                         <div style={{ display: 'flex', gap: 15, flexWrap: 'wrap' }}>
@@ -307,7 +307,7 @@ export default function SpareSummaryPage({ data = [], rawSources = {}, isLoading
                     </div>
 
                     {/* Main Table Content */}
-                    <div className="compact-table-wrapper" style={{ maxHeight: 'calc(100vh - 350px)', overflow: 'auto' }}>
+                    <div className="compact-table-wrapper" style={{ flex: 1, overflow: 'auto' }}>
                         <table className="compact-table ultra-compact">
                             <thead style={{ position: 'sticky', top: 0, zIndex: 10 }}>
                                 <tr>
@@ -318,6 +318,7 @@ export default function SpareSummaryPage({ data = [], rawSources = {}, isLoading
                                     <th className="narrow-cell">PO</th>
                                     <th style={{ textAlign: 'center', width: '1%' }}>กำหนดส่ง</th>
                                     <th style={{ textAlign: 'left' }}>Supplier</th>
+                                    <th style={{ textAlign: 'left' }}>PO Document</th>
                                     <th className="narrow-cell">จำนวนส่ง</th>
                                     <th className="narrow-cell">นวนคร</th>
                                     <th className="narrow-cell" style={{ background: 'rgba(0,123,255,0.1)', color: 'var(--info-color)' }}>รวม</th>
@@ -372,6 +373,9 @@ export default function SpareSummaryPage({ data = [], rawSources = {}, isLoading
                                             </td>
                                             <td title={detail.supplier}>
                                                 {detail.supplier}
+                                            </td>
+                                            <td style={{ textAlign: 'left' }}>
+                                                {detail.poDoc}
                                             </td>
                                             <td className="narrow-cell" style={{ fontWeight: 700, color: detail.qtyDeliv !== '-' ? '#198754' : '#ccc' }}>
                                                 {detail.qtyDeliv}

@@ -116,6 +116,12 @@ function App() {
     // If clicking the same active filter, toggle it off (null = show all)
     if (filter === 'total') {
       setDashboardFilter(null);
+      // Reset all other filters
+      setTeamPlantFilter('');
+      setPendingUnitFilter('');
+      setStockAnswerFilter('');
+      setStatusCallFilter('');
+      setSearchTerm('');
     } else {
       setDashboardFilter(dashboardFilter === filter ? null : filter);
     }
@@ -157,7 +163,6 @@ function App() {
     const requiredPlant = PLANT_MAPPING[pendingUnit];
 
     if (!userPlant || !requiredPlant || userPlant.trim() !== requiredPlant.trim()) {
-      alert(`คุณไม่มีสิทธิทำรายการนี้\nสิทธินี้มีไว้สำหรับหน่วยงานของท่านเท่านั้น (รหัสหน่วยงานของคุณคือ ${userPlant || '-'} แต่รายการนี้ค้างที่ ${pendingUnit} ซึ่งคือรหัส ${requiredPlant || '-'})`);
       return;
     }
     setOutsideRequestModal({ open: true, row });
