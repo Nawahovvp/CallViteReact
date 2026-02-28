@@ -60,9 +60,13 @@ export default function AppHeader({ user, onLogout, lastUpdated }) {
                             </button>
                         </div>
                         <div className="sheet-user">
+                            <div className="sheet-avatar">
+                                {user?.Name ? user.Name.replace(/^(นาย|นางสาว|นาง|น\.ส\.|ด\.ช\.|ด\.ญ\.)\s*/, '').charAt(0) : 'U'}
+                            </div>
                             <div className="name">{user?.Name || '-'}</div>
                             <div className="meta">
-                                <span>{user?.Unit || '-'}</span> • <span>{user?.Plant || '-'}</span> • <span>{user?.IDRec || '-'}</span>
+                                <span className="sheet-badge"><i className="fas fa-id-badge" style={{ marginRight: '6px' }}></i>{user?.IDRec || '-'}</span>
+                                <span style={{ marginTop: '6px' }}>หน่วยงาน: {user?.['หน่วยงาน'] || '-'} • ทีม: {user?.Unit || '-'} • Plant {user?.Plant || '-'}</span>
                             </div>
                         </div>
                         <div className="sheet-actions">

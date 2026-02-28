@@ -47,7 +47,8 @@ export default function DataTable({
     onOtherPlantClick,
     onStatusXClick,
     onStatusGroupClick,
-    onDetailClick
+    onDetailClick,
+    onNawaClick
 }) {
     const dataWithGroup = React.useMemo(() => {
         let lastTicket = null;
@@ -155,7 +156,8 @@ export default function DataTable({
                                         {/* Nawa */}
                                         <td data-column="Nawa" style={{ textAlign: 'center' }}>
                                             {nawaVal > 0 ? (
-                                                <span className="request-pill" style={{ backgroundColor: 'var(--success-color)', color: '#fff' }}>{row['Nawa']}</span>
+                                                <span className="request-pill" style={{ backgroundColor: 'var(--success-color)', color: '#fff', cursor: 'pointer' }}
+                                                    onClick={(e) => { e.stopPropagation(); onNawaClick?.(row); }}>{row['Nawa']}</span>
                                             ) : ''}
                                         </td>
                                         {/* Vipa */}

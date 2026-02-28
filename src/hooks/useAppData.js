@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { fetchAllData } from '../services/api';
-import { processRawData, calculateSummary, getCleanTeamPlant } from '../utils/helpers';
+import { processRawData, calculateSummary, getCleanTeamPlant, normalizeMaterial } from '../utils/helpers';
 
 export function useAppData() {
     const [processedData, setProcessedData] = useState([]);
@@ -194,19 +194,23 @@ export function useAppData() {
                     else if (evals.some(r => r.StatusX === "ระหว่างขนส่ง")) newStatusCall = "ระหว่างขนส่ง";
                     else if (ticketRows.some(r => r.StatusX === "แจ้งCodeผิด")) newStatusCall = "แจ้งCodeผิด";
 
-                    if (newStatusCall === "รอของเข้า") {
-                        const allOtherPlant = ticketRows.every(r => {
+                    if (newStatusCall === "รอของเข้า" || newStatusCall === "ดึงจากคลังอื่น") {
+                        const hasOtherPlant = validRows.some(r => {
                             const op = r["OtherPlant"];
                             return r.StatusX === "ดึงจากคลังอื่น" || (op !== undefined && op !== null && op !== "" && op !== "-" && op !== 0 && op !== "0");
                         });
 
-                        // If all items under the ticket are "ดึงจากคลังอื่น", set the group StatusCall to "ดึงจากคลังอื่น"
-                        if (allOtherPlant && ticketRows.length > 0) {
+                        const allOtherPlant = validRows.every(r => {
+                            const op = r["OtherPlant"];
+                            return r.StatusX === "ดึงจากคลังอื่น" || (op !== undefined && op !== null && op !== "" && op !== "-" && op !== 0 && op !== "0");
+                        });
+
+                        if (allOtherPlant && validRows.length > 0) {
                             newStatusCall = "ดึงจากคลังอื่น";
                         }
                     }
                     if (newStatusCall === "รอของเข้า" || newStatusCall === "ดึงจากคลังอื่น") {
-                        if (ticketRows.some(r => r.StatusX === "เกินLeadtime")) {
+                        if (validRows.some(r => r.StatusX === "เกินLeadtime")) {
                             newStatusCall = "เกินLeadtime";
                         }
                     }
@@ -246,6 +250,52 @@ export function useAppData() {
         applyDashboardFilter,
         refreshData: () => fetchData(true),
         refreshDataBackground: () => fetchData(false),
-        updateRowLocally
+        updateRowLocally,
+        handleOutsideRequest: async (payload) => {
+            const { material, quantity } = payload;
+            const localKey = normalizeMaterial(material);
+            const localQty = parseFloat(quantity);
+
+            if (!localKey || isNaN(localQty)) {
+                throw new Error("Invalid material or quantity");
+            }
+
+            // 1. Optimistic Update Local Cache (requestQuantities)
+            let currentCache = {};
+            try {
+                const cachedPropsText = localStorage.getItem('app_cached_requestQuantities');
+                if (cachedPropsText) {
+                    currentCache = JSON.parse(cachedPropsText);
+                }
+            } catch (e) {
+                console.error("Error reading cache", e);
+            }
+            const previousQty = currentCache[localKey] || 0;
+            currentCache[localKey] = previousQty + localQty;
+            localStorage.setItem('app_cached_requestQuantities', JSON.stringify(currentCache));
+
+            // Force refresh of the processed data to reflect the new Request quantity
+            // A lightweight way is to re-run the processor on the existing state, but fetchData(false) is safer
+            fetchData(false);
+
+            // 2. Background Fetch to GAS
+            const gasUrl = 'https://script.google.com/macros/s/AKfycbycEiGdjEFmLSPSqgBUBBntG0OnaatLTkNozlZTn0RRgZHiuL9HCWisIsmMqth9Dzrv/exec';
+
+            try {
+                await fetch(gasUrl, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: `action=insertRequest&payload=${encodeURIComponent(JSON.stringify(payload))}`
+                });
+                return true;
+            } catch (err) {
+                console.error("Outside request sync failed:", err);
+                // Even if no-cors fetch fails silently, we gracefully handle it
+                // We do NOT revert optimistic update because no-cors often throws False negatives in modern browsers
+                // Just log it.
+                return true;
+            }
+        }
     };
 }

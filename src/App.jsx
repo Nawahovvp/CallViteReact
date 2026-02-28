@@ -8,10 +8,12 @@ import DashboardCards from './components/DashboardCards';
 import AnalyticsCards from './components/AnalyticsCards';
 import ControlPanel from './components/ControlPanel';
 import DataTable from './components/DataTable';
-import { DetailModal, ActionModal, GraphModal, SummaryModal, SpareSummaryModal } from './components/Modals';
+import { DetailModal, ActionModal, GraphModal, SummaryModal, SpareSummaryModal, OutsideRequestModal } from './components/Modals';
 import { PoDetailsModal, PrDetailsModal, OtherPlantModal, StatusEditModal, ProjectModal, TimelineModal } from './components/TableModals';
 
 import { useAppData } from './hooks/useAppData';
+import { PLANT_MAPPING } from './utils/helpers';
+import SpareSummaryPage from './components/SpareSummaryPage';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -44,7 +46,8 @@ function App() {
     applyDashboardFilter,
     refreshData,
     refreshDataBackground,
-    updateRowLocally
+    updateRowLocally,
+    handleOutsideRequest
   } = useAppData();
 
   const [currentPage, setCurrentPage] = useState(1);
@@ -64,6 +67,7 @@ function App() {
   const [statusEditModal, setStatusEditModal] = useState({ open: false, row: null });
   const [projectModal, setProjectModal] = useState({ open: false, row: null });
   const [timelineModal, setTimelineModal] = useState({ open: false, row: null });
+  const [outsideRequestModal, setOutsideRequestModal] = useState({ open: false, row: null });
 
   const handleSort = (key) => {
     let direction = 'asc';
@@ -144,6 +148,20 @@ function App() {
   const handleStatusXClick = (row) => setStatusEditModal({ open: true, row });
   const handleStatusGroupClick = (row) => setProjectModal({ open: true, row });
   const handleDetailClick = (row) => setTimelineModal({ open: true, row });
+  const handleNawaClick = (row) => {
+    const userStr = localStorage.getItem('user');
+    const user = userStr ? JSON.parse(userStr) : {};
+    const userPlant = user.Plant || localStorage.getItem('userPlant') || '';
+
+    const pendingUnit = row["ค้างหน่วยงาน"] ? row["ค้างหน่วยงาน"].toString().trim() : '';
+    const requiredPlant = PLANT_MAPPING[pendingUnit];
+
+    if (!userPlant || !requiredPlant || userPlant.trim() !== requiredPlant.trim()) {
+      alert(`คุณไม่มีสิทธิทำรายการนี้\nสิทธินี้มีไว้สำหรับหน่วยงานของท่านเท่านั้น (รหัสหน่วยงานของคุณคือ ${userPlant || '-'} แต่รายการนี้ค้างที่ ${pendingUnit} ซึ่งคือรหัส ${requiredPlant || '-'})`);
+      return;
+    }
+    setOutsideRequestModal({ open: true, row });
+  };
 
   // After status edit save, refresh data optimistically
   const handleStatusEditSaved = (actionType, ticket, material, newStatus) => {
@@ -179,6 +197,21 @@ function App() {
     }
   };
 
+  // Simple routing logic
+  const queryParams = new URLSearchParams(window.location.search);
+  const currentPagePath = queryParams.get('page');
+
+  if (currentPagePath === 'spare-summary') {
+    return (
+      <SpareSummaryPage
+        data={data}
+        rawSources={rawSources}
+        isLoading={isLoading}
+        onClose={() => window.close()}
+      />
+    );
+  }
+
   return (
     <>
       {!isLoggedIn && (
@@ -208,7 +241,7 @@ function App() {
           <AnalyticsCards
             data={summary}
             onOpenGraph={() => setGraphOpen(true)}
-            onOpenSpareSummary={() => setSpareSummaryOpen(true)}
+            onOpenSpareSummary={() => window.open('?page=spare-summary', '_blank')}
             onOver7Click={handleOver7Click}
             onWaitingResponseClick={handleWaitingResponseClick}
             onMaxCardClick={handleMaxCardClick}
@@ -255,6 +288,7 @@ function App() {
             onStatusXClick={handleStatusXClick}
             onStatusGroupClick={handleStatusGroupClick}
             onDetailClick={handleDetailClick}
+            onNawaClick={handleNawaClick}
           />
 
           <GraphModal
@@ -281,6 +315,7 @@ function App() {
             onClose={() => setSpareSummaryOpen(false)}
             data={data}
             rawSources={rawSources}
+            isLoading={isLoading}
           />
 
           {/* Table interaction modals */}
@@ -323,6 +358,21 @@ function App() {
             isOpen={timelineModal.open}
             onClose={() => setTimelineModal({ open: false, row: null })}
             row={timelineModal.row}
+          />
+          <OutsideRequestModal
+            isOpen={outsideRequestModal.open}
+            onClose={() => setOutsideRequestModal({ open: false, row: null })}
+            row={outsideRequestModal.row}
+            onSubmit={async (payload) => {
+              try {
+                await handleOutsideRequest(payload);
+                // Note: The modal closure is now handled inside Modals.jsx
+                // to allow for the success animation to play before closing.
+              } catch (err) {
+                alert('ส่งข้อมูลไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+                throw err;
+              }
+            }}
           />
         </div>
       )}

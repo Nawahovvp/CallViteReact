@@ -265,7 +265,7 @@ export function SummaryModal({ isOpen, onClose, data = [] }) {
 }
 
 // ===== Spare Summary Modal (Full Port from call.js) =====
-export function SpareSummaryModal({ isOpen, onClose, data = [], rawSources = {} }) {
+export function SpareSummaryModal({ isOpen, onClose, data = [], rawSources = {}, isLoading }) {
     const [prgFilter, setPrgFilter] = useState('');
     const [supplierFilter, setSupplierFilter] = useState('');
 
@@ -455,6 +455,22 @@ export function SpareSummaryModal({ isOpen, onClose, data = [], rawSources = {} 
     }, [computedData, prgFilter, supplierFilter]);
 
     if (!isOpen) return null;
+
+    if (isLoading && (!data || data.length === 0)) {
+        return (
+            <div className="modal" onClick={(e) => e.target.className === 'modal' && onClose()}>
+                <div className="modal-content" style={{ textAlign: 'center', padding: '100px' }}>
+                    <span className="close" onClick={onClose}>×</span>
+                    <div className="spinner" style={{ margin: '0 auto 20px', width: '60px', height: '60px', border: '6px solid rgba(0,0,0,0.1)', borderTopColor: 'var(--info-color)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+                    <p style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>กำลังโหลดข้อมุล...</p>
+                    <style>{`
+                        @keyframes spin { to { transform: rotate(360deg); } }
+                    `}</style>
+                </div>
+            </div>
+        );
+    }
+
     if (!computedData) return (
         <div className="modal" onClick={(e) => e.target.className === 'modal' && onClose()}>
             <div className="modal-content">
@@ -664,6 +680,194 @@ export function ActionModal({
                     <button className="action-button logout-button" style={{ width: '100%', fontSize: '0.9em', padding: '10px 5px' }} onClick={onClose}>
                         <i className="fas fa-times"></i> {cancelText}
                     </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ===== Outside Request (นอกรอบ) Modal =====
+export function OutsideRequestModal({ isOpen, onClose, row, onSubmit }) {
+    const [quantity, setQuantity] = useState(1);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSuccess, setIsSuccess] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            setQuantity(1);
+            setIsSubmitting(false);
+            setIsSuccess(false);
+        }
+    }, [isOpen, row]);
+
+    if (!isOpen || !row) return null;
+
+    const desc = getDesc(row);
+    // Parse user object from localStorage
+    const userStr = localStorage.getItem('user');
+    const userObj = userStr ? JSON.parse(userStr) : {};
+
+    const userName = userObj.Name || localStorage.getItem('userName') || 'ไม่ระบุ';
+    const employeeCode = userObj.IDRec || localStorage.getItem('username') || '-';
+    const userPlant = userObj.Plant || localStorage.getItem('userPlant') || '-';
+
+    const customer = `${row["Team"] || "-"} (${row["Brand"] || "-"})`;
+    const defaultPhone = "0909082850";
+
+    const handleSubmit = async () => {
+        if (quantity < 1 || isNaN(quantity)) {
+            alert('กรุณากรอกจำนวนที่ถูกต้อง (อย่างน้อย 1)');
+            return;
+        }
+
+        setIsSubmitting(true);
+        // Construct payload matching the original gasUrl expectations
+        const payload = {
+            material: row["Material"] || "-",
+            description: desc || "-",
+            quantity: quantity,
+            contact: defaultPhone,
+            employeeCode: employeeCode,
+            team: customer,
+            employeeName: userName,
+            callNumber: row["Ticket Number"] || "-",
+            callType: row["Call Type"] || "-",
+            remark: "",
+            status: "รอเบิก",
+            plant: userPlant
+        };
+
+        try {
+            await onSubmit(payload);
+            setIsSubmitting(false);
+            setIsSuccess(true);
+            setTimeout(() => {
+                onClose();
+            }, 800); // Wait 800ms to show success checkmark before closing
+        } catch (err) {
+            setIsSubmitting(false);
+        }
+    };
+
+    return (
+        <div className="modal compact-modal-overlay">
+            <div className="modal-content compact-modal" style={{ maxWidth: '500px', padding: 0, overflow: 'hidden' }}>
+                <div style={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    padding: '20px',
+                    color: 'white',
+                    position: 'relative'
+                }}>
+                    <span className="close" onClick={onClose} style={{ color: 'white', position: 'absolute', top: '15px', right: '20px', textShadow: 'none' }}>×</span>
+                    <h3 style={{ margin: '0 0 15px 0', textAlign: 'center', fontSize: '18px', fontWeight: 600 }}>
+                        <i className="fas fa-shopping-cart" style={{ marginRight: '8px' }}></i> เบิกอะไหล่นอกรอบ
+                    </h3>
+
+                    <div style={{ background: 'rgba(255,255,255,0.1)', padding: '15px', borderRadius: '10px', marginBottom: '15px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '14px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '5px', borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
+                                <strong style={{ color: '#ffd700' }}>Material:</strong>
+                                <span style={{ textAlign: 'right', flex: 1 }}>{row["Material"] || "-"}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '5px', borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
+                                <strong style={{ color: '#ffd700' }}>Description:</strong>
+                                <span style={{ textAlign: 'right', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '250px' }} title={desc}>{desc || "-"}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '5px', borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
+                                <strong style={{ color: '#ffd700' }}>Ticket Number:</strong>
+                                <span style={{ textAlign: 'right', flex: 1 }}>{row["Ticket Number"] || "-"}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '5px', borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
+                                <strong style={{ color: '#ffd700' }}>Call Type:</strong>
+                                <span style={{ textAlign: 'right', flex: 1 }}>{row["Call Type"] || "-"}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '5px', borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
+                                <strong style={{ color: '#ffd700' }}>User:</strong>
+                                <span style={{ textAlign: 'right', flex: 1 }}>{userName}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '5px', borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
+                                <strong style={{ color: '#ffd700' }}>Plant:</strong>
+                                <span style={{ textAlign: 'right', flex: 1 }}>{userPlant}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '5px', borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
+                                <strong style={{ color: '#ffd700' }}>Customer:</strong>
+                                <span style={{ textAlign: 'right', flex: 1, fontWeight: 'bold' }}>{customer}</span>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '5px', borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
+                                <strong style={{ color: '#ffd700' }}>เบอร์ติดต่อ:</strong>
+                                <span style={{ textAlign: 'right', flex: 1, fontWeight: 'bold' }}>{defaultPhone}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style={{ marginBottom: '15px' }}>
+                        <label htmlFor="outside-quantity" style={{ display: 'block', marginBottom: '8px', fontWeight: 'bold', fontSize: '14px' }}>จำนวน:</label>
+                        <input
+                            type="number"
+                            id="outside-quantity"
+                            value={quantity}
+                            min="1"
+                            onChange={(e) => setQuantity(parseInt(e.target.value) || '')}
+                            style={{
+                                width: '100%',
+                                padding: '10px',
+                                border: 'none',
+                                borderRadius: '8px',
+                                background: 'rgba(255,255,255,0.9)',
+                                fontSize: '16px',
+                                color: '#333',
+                                outline: 'none',
+                                boxSizing: 'border-box',
+                                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.1)'
+                            }}
+                        />
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
+                        <button
+                            onClick={onClose}
+                            style={{
+                                padding: '10px 20px',
+                                background: '#dc3545',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '6px',
+                                cursor: 'pointer',
+                                fontWeight: 'bold',
+                                fontSize: '14px'
+                            }}
+                        >
+                            ยกเลิก
+                        </button>
+                        <button
+                            onClick={handleSubmit}
+                            disabled={isSubmitting || isSuccess}
+                            style={{
+                                padding: '10px 20px',
+                                background: isSuccess ? '#198754' : (isSubmitting ? '#6c757d' : '#28a745'),
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '6px',
+                                cursor: (isSubmitting || isSuccess) ? 'not-allowed' : 'pointer',
+                                fontWeight: 'bold',
+                                fontSize: '14px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                transition: 'all 0.3s ease',
+                                minWidth: '90px',
+                                justifyContent: 'center'
+                            }}
+                        >
+                            {isSubmitting ? (
+                                <><i className="fas fa-spinner fa-spin"></i> กำลังบันทึก...</>
+                            ) : isSuccess ? (
+                                <><i className="fas fa-check"></i> สำเร็จ</>
+                            ) : (
+                                "ยืนยัน"
+                            )}
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

@@ -5,7 +5,7 @@ import { saveToGoogleSheet } from '../services/api';
 // ===== PLANT_MAPPING for OtherPlant reverse lookup =====
 const PLANT_MAPPING = {
     "Stock กทม": "0301",
-    "Stock คลังระยอง": "0369",
+    "Stock ระยอง": "0369",
     "Stock วิภาวดี 62": "0326",
     "Stock ขอนแก่น": "0319",
     "Stock โคราช": "0309",
@@ -35,7 +35,11 @@ const PLANT_MAPPING = {
 
 const REVERSE_PLANT_MAP = {};
 for (const [name, code] of Object.entries(PLANT_MAPPING)) {
-    REVERSE_PLANT_MAP[code] = name.replace(/^Stock\s+/i, '').trim();
+    const cleanName = name.replace(/^Stock\s+/i, '').trim();
+    REVERSE_PLANT_MAP[code] = cleanName;
+    if (code.startsWith('0')) {
+        REVERSE_PLANT_MAP[code.substring(1)] = cleanName;
+    }
 }
 
 // ===== PO Details Modal =====
@@ -62,45 +66,87 @@ export function PoDetailsModal({ isOpen, onClose, material, description, poRawDa
 
     return (
         <div className="modal" style={{ zIndex: 1100 }}>
-            <div className="modal-content" style={{ maxWidth: '800px' }}>
-                <span className="close" onClick={onClose}>&times;</span>
-                <h3 style={{ color: 'var(--header-bg)', marginBottom: 15 }}>
-                    รายละเอียด PO: {material} {description}
-                </h3>
-                {details.length === 0 ? (
-                    <p style={{ color: '#666' }}>ไม่พบรายละเอียด PO</p>
-                ) : (
-                    <div style={{ overflowX: 'auto' }}>
-                        <table className="detail-table" style={{ width: '100%' }}>
-                            <thead>
-                                <tr>
-                                    <th style={{ textAlign: 'center' }}>กำหนดส่ง</th>
-                                    <th style={{ textAlign: 'center' }}>Purchasing Document</th>
-                                    <th style={{ textAlign: 'center' }}>Supplier</th>
-                                    <th style={{ textAlign: 'center' }}>จำนวน</th>
-                                    <th style={{ textAlign: 'center' }}>Leadtime</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {details.map((row, i) => {
-                                    const date = row["Document Date"] || row["Date"] || row["Delivery Date"] || row["Deliv.Date"] || "-";
-                                    const doc = row["Purchasing Document"] || row["Purch.Doc."] || "-";
-                                    const supplier = row["Supplier/Supplying Plant"] || "-";
-                                    const qty = row["Still to be delivered (qty)"] || "-";
-                                    return (
-                                        <tr key={i}>
-                                            <td style={{ textAlign: 'center' }}>{date}</td>
-                                            <td style={{ textAlign: 'center' }}>{doc}</td>
-                                            <td style={{ textAlign: 'center' }}>{supplier}</td>
-                                            <td style={{ textAlign: 'center' }}>{qty}</td>
-                                            <td style={{ textAlign: 'center', color: 'var(--danger-color)', fontWeight: 'bold' }}>{leadtime}</td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
+            <div className="premium-modal-content" style={{ maxWidth: '900px' }}>
+                <div className="premium-modal-header">
+                    <h3><i className="fas fa-file-invoice" style={{ marginRight: 10 }}></i> รายละเอียด PO</h3>
+                    <span className="premium-modal-close" onClick={onClose}>&times;</span>
+                </div>
+                <div className="premium-modal-body">
+                    <div className="modal-info-bar">
+                        <div className="modal-info-item">
+                            <span className="modal-info-label">Material:</span>
+                            <span className="modal-info-value">{material}</span>
+                        </div>
+                        <div className="modal-info-item">
+                            <span className="modal-info-label">Description:</span>
+                            <span className="modal-info-value">{description}</span>
+                        </div>
                     </div>
-                )}
+
+                    {details.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '40px 0', color: '#888' }}>
+                            <i className="fas fa-box-open" style={{ fontSize: 48, display: 'block', marginBottom: 10, opacity: 0.3 }}></i>
+                            ไม่พบรายละเอียด PO
+                        </div>
+                    ) : (
+                        <div className="compact-table-wrapper">
+                            <table className="compact-table">
+                                <thead>
+                                    <tr>
+                                        <th style={{ textAlign: 'center', width: '120px' }}>กำหนดส่ง</th>
+                                        <th>Purchasing Document</th>
+                                        <th>Supplier</th>
+                                        <th style={{ textAlign: 'center', width: '80px' }}>จำนวน</th>
+                                        <th style={{ textAlign: 'center', width: '80px' }}>Leadtime</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {details.map((row, i) => {
+                                        const dateStr = row["Document Date"] || row["Date"] || row["Delivery Date"] || row["Deliv.Date"] || "-";
+                                        const doc = row["Purchasing Document"] || row["Purch.Doc."] || "-";
+                                        const supplier = row["Supplier/Supplying Plant"] || "-";
+                                        const qty = row["Still to be delivered (qty)"] || "-";
+
+                                        // Overdue logic
+                                        let isOverdue = false;
+                                        if (dateStr !== "-") {
+                                            const [d, m, y] = dateStr.split('/').map(Number);
+                                            if (d && m && y) {
+                                                const fullYear = y < 100 ? 2000 + y : y;
+                                                const deliveryDate = new Date(fullYear, m - 1, d);
+                                                const today = new Date();
+                                                today.setHours(0, 0, 0, 0);
+                                                if (deliveryDate < today) isOverdue = true;
+                                            }
+                                        }
+
+                                        const cellStyle = { fontSize: '13px', padding: '10px 15px' };
+
+                                        return (
+                                            <tr key={i}>
+                                                <td style={{ ...cellStyle, textAlign: 'center' }}>
+                                                    {isOverdue ? (
+                                                        <span style={{
+                                                            background: '#fff3cd', color: '#856404',
+                                                            padding: '2px 8px', borderRadius: '4px',
+                                                            border: '1px solid #ffeeba', fontWeight: '600'
+                                                        }}>
+                                                            {dateStr}
+                                                        </span>
+                                                    ) : dateStr}
+                                                </td>
+                                                <td style={{ ...cellStyle, color: '#007bff' }}>{doc}</td>
+                                                <td style={{ ...cellStyle }}>{supplier}</td>
+                                                <td style={{ ...cellStyle, textAlign: 'center', fontWeight: 'bold', color: 'var(--success-color)' }}>{qty}</td>
+                                                <td style={{ ...cellStyle, textAlign: 'center', color: 'var(--danger-color)', fontWeight: 'bold' }}>{leadtime}</td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
@@ -124,42 +170,58 @@ export function PrDetailsModal({ isOpen, onClose, material, description, prRawDa
 
     return (
         <div className="modal" style={{ zIndex: 1100 }}>
-            <div className="modal-content" style={{ maxWidth: '600px' }}>
-                <span className="close" onClick={onClose}>&times;</span>
-                <h3 style={{ color: 'var(--header-bg)', marginBottom: 15 }}>
-                    รายละเอียด PR: {material} {description}
-                </h3>
-                {details.length === 0 ? (
-                    <p style={{ color: '#666' }}>ไม่พบรายละเอียด PR</p>
-                ) : (
-                    <div style={{ overflowX: 'auto' }}>
-                        <table className="detail-table" style={{ width: '100%' }}>
-                            <thead>
-                                <tr>
-                                    <th style={{ textAlign: 'center' }}>Requisition date</th>
-                                    <th style={{ textAlign: 'center' }}>Purchase Requisition</th>
-                                    <th style={{ textAlign: 'center' }}>จำนวน</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {details.map((row, i) => {
-                                    const date = row["Requisition date"] || "-";
-                                    const doc = row["Purchase Requisition"] || "-";
-                                    const req = parseFloat((row["Quantity requested"] || "0").toString().replace(/,/g, '')) || 0;
-                                    const ord = parseFloat((row["Quantity ordered"] || "0").toString().replace(/,/g, '')) || 0;
-                                    const qty = req - ord;
-                                    return (
-                                        <tr key={i}>
-                                            <td style={{ textAlign: 'center' }}>{date}</td>
-                                            <td style={{ textAlign: 'center' }}>{doc}</td>
-                                            <td style={{ textAlign: 'center' }}>{qty}</td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
+            <div className="premium-modal-content" style={{ maxWidth: '700px' }}>
+                <div className="premium-modal-header">
+                    <h3><i className="fas fa-file-alt" style={{ marginRight: 10 }}></i> รายละเอียด PR</h3>
+                    <span className="premium-modal-close" onClick={onClose}>&times;</span>
+                </div>
+                <div className="premium-modal-body">
+                    <div className="modal-info-bar">
+                        <div className="modal-info-item">
+                            <span className="modal-info-label">Material:</span>
+                            <span className="modal-info-value">{material}</span>
+                        </div>
+                        <div className="modal-info-item">
+                            <span className="modal-info-label">Description:</span>
+                            <span className="modal-info-value">{description}</span>
+                        </div>
                     </div>
-                )}
+
+                    {details.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '40px 0', color: '#888' }}>
+                            <i className="fas fa-box-open" style={{ fontSize: 48, display: 'block', marginBottom: 10, opacity: 0.3 }}></i>
+                            ไม่พบรายละเอียด PR
+                        </div>
+                    ) : (
+                        <div className="compact-table-wrapper">
+                            <table className="compact-table">
+                                <thead>
+                                    <tr>
+                                        <th style={{ textAlign: 'center', width: '150px' }}>Requisition date</th>
+                                        <th>Purchase Requisition</th>
+                                        <th style={{ textAlign: 'center', width: '100px' }}>จำนวน</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {details.map((row, i) => {
+                                        const date = row["Requisition date"] || "-";
+                                        const doc = row["Purchase Requisition"] || "-";
+                                        const req = parseFloat((row["Quantity requested"] || "0").toString().replace(/,/g, '')) || 0;
+                                        const ord = parseFloat((row["Quantity ordered"] || "0").toString().replace(/,/g, '')) || 0;
+                                        const qty = req - ord;
+                                        return (
+                                            <tr key={i}>
+                                                <td style={{ textAlign: 'center', fontWeight: '500' }}>{date}</td>
+                                                <td style={{ fontFamily: 'monospace', color: '#17a2b8' }}>{doc}</td>
+                                                <td style={{ textAlign: 'center', fontWeight: 'bold', color: 'var(--success-color)' }}>{qty}</td>
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
@@ -205,35 +267,57 @@ export function OtherPlantModal({ isOpen, onClose, material, description, plantS
 
     return (
         <div className="modal" style={{ zIndex: 1100 }}>
-            <div className="modal-content" style={{ maxWidth: '500px' }}>
-                <span className="close" onClick={onClose}>&times;</span>
-                <div style={{ marginBottom: 15 }}>
-                    <strong>Material:</strong> {material} {description}
+            <div className="premium-modal-content" style={{ maxWidth: '600px' }}>
+                <div className="premium-modal-header">
+                    <h3><i className="fas fa-warehouse" style={{ marginRight: 10 }}></i> รายละเอียดพื้นที่อื่น</h3>
+                    <span className="premium-modal-close" onClick={onClose}>&times;</span>
                 </div>
-                {plantDetails.length === 0 ? (
-                    <p style={{ color: '#666' }}>ไม่พบรายละเอียดพื้นที่อื่นสำหรับ Material นี้</p>
-                ) : (
-                    <table className="detail-table" style={{ width: '100%', borderCollapse: 'collapse', marginTop: 10 }}>
-                        <thead>
-                            <tr style={{ background: '#f1f1f1' }}>
-                                <th style={{ padding: 10, border: '1px solid #ccc', textAlign: 'left' }}>Plant</th>
-                                <th style={{ padding: 10, border: '1px solid #ccc', textAlign: 'center' }}>จำนวน</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {plantDetails.map((item, i) => (
-                                <tr key={i}>
-                                    <td style={{ padding: 10, border: '1px solid #ccc' }}>{item.displayName}</td>
-                                    <td style={{ padding: 10, border: '1px solid #ccc', textAlign: 'center' }}>{item.qty.toLocaleString()}</td>
-                                </tr>
-                            ))}
-                            <tr style={{ background: '#f9f9f9' }}>
-                                <td style={{ padding: 10, border: '1px solid #ccc', fontWeight: 'bold', textAlign: 'right' }}>รวม</td>
-                                <td style={{ padding: 10, border: '1px solid #ccc', textAlign: 'center', fontWeight: 'bold', color: '#20c997' }}>{total.toLocaleString()}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                )}
+                <div className="premium-modal-body">
+                    <div className="modal-info-bar">
+                        <div className="modal-info-item">
+                            <span className="modal-info-label">Material:</span>
+                            <span className="modal-info-value">{material}</span>
+                        </div>
+                        <div className="modal-info-item">
+                            <span className="modal-info-label">Description:</span>
+                            <span className="modal-info-value">{description}</span>
+                        </div>
+                    </div>
+
+                    {plantDetails.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '40px 0', color: '#888' }}>
+                            <i className="fas fa-store-slash" style={{ fontSize: 48, display: 'block', marginBottom: 10, opacity: 0.3 }}></i>
+                            ไม่พบรายละเอียดพื้นที่อื่นสำหรับ Material นี้
+                        </div>
+                    ) : (
+                        <div className="compact-table-wrapper">
+                            <table className="compact-table">
+                                <thead>
+                                    <tr>
+                                        <th>คลังสินค้า (Plant)</th>
+                                        <th style={{ textAlign: 'center', width: '120px' }}>จำนวนคงเหลือ</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {plantDetails.map((item, i) => (
+                                        <tr key={i}>
+                                            <td style={{ fontWeight: '500' }}>{item.displayName}</td>
+                                            <td style={{ textAlign: 'center', fontWeight: 'bold', color: item.qty > 0 ? 'var(--success-color)' : '#999' }}>
+                                                {item.qty.toLocaleString()}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    <tr style={{ background: 'rgba(0,0,0,0.02)', fontWeight: 'bold' }}>
+                                        <td style={{ textAlign: 'right', padding: '12px 15px' }}>รวมทั้งหมด</td>
+                                        <td style={{ textAlign: 'center', padding: '12px 15px', color: '#20c997', fontSize: '15px' }}>
+                                            {total.toLocaleString()}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );
