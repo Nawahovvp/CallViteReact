@@ -185,7 +185,7 @@ export default function DataTable({
                                         {/* OtherPlant */}
                                         <td data-column="OtherPlant" style={{ textAlign: 'center' }}>
                                             {otherPlantVal > 0 ? (
-                                                <span className="request-pill" style={{ backgroundColor: '#20c997', color: '#fff', cursor: 'pointer' }}
+                                                <span className="request-pill" style={{ backgroundColor: '#e91e63', color: '#fff', cursor: 'pointer' }}
                                                     onClick={(e) => { e.stopPropagation(); onOtherPlantClick?.(row); }}>{row['OtherPlant']}</span>
                                             ) : ''}
                                         </td>

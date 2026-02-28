@@ -8,7 +8,7 @@ Chart.register(...registerables);
 export function DetailModal({ isOpen, onClose, content }) {
     if (!isOpen) return null;
     return (
-        <div className="modal">
+        <div className="modal" onClick={(e) => e.target.className === 'modal' && onClose()}>
             <div className="modal-content">
                 <span className="close" onClick={onClose}>×</span>
                 <h2>รายละเอียด</h2>
@@ -223,41 +223,47 @@ export function SummaryModal({ isOpen, onClose, data = [] }) {
         }).join('');
 
         return `
-            <div><span class='label'>จำนวน Call ทั้งหมด:</span> <span class='value'>${totalCalls} Call</span></div>
-            <h3>จำนวน Call ค้างตามศูนย์พื้นที่และสถานะ Call</h3>
-            <table class='detail-table summary-table'>
-                <thead><tr><th>ศูนย์พื้นที่</th><th class='fixed-width'>รวม</th>${headerCells}</tr></thead>
-                <tbody>${bodyRows}
-                <tr><td><strong>รวม</strong></td><td class='fixed-width'><strong>${totalCalls === 0 ? '-' : totalCalls}</strong></td>${totalRow}</tr>
-                </tbody>
-            </table>`;
+            <div style="display: flex; gap: 20px; margin-bottom: 20px;">
+                <div class="stat-card" style="flex: 1; display: flex; align-items: center; gap: 15px; background: rgba(0,123,255,0.05);">
+                    <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--header-bg); color: #fff; display: flex; align-items: center; justify-content: center;">
+                        <i class="fas fa-phone-alt"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 12px; color: var(--text-secondary);">จำนวน Call ทั้งหมด</div>
+                        <div style="font-size: 20px; font-weight: 800; color: var(--header-bg);">${totalCalls} Call</div>
+                    </div>
+                </div>
+            </div>
+            <div class="compact-table-wrapper" style="max-height: 65vh; overflow: auto;">
+                <table class="compact-table">
+                    <thead><tr><th>ศูนย์พื้นที่</th><th>รวม</th>${headerCells}</tr></thead>
+                    <tbody>${bodyRows}
+                    <tr style="font-weight: 800; background: rgba(0,0,0,0.03);"><td>รวม</td><td>${totalCalls === 0 ? '-' : totalCalls}</td>${totalRow}</tr>
+                    </tbody>
+                </table>
+            </div>`;
     }, [data]);
 
     if (!isOpen) return null;
     return (
         <div className="modal" onClick={(e) => e.target.className === 'modal' && onClose()}>
-            <div className="modal-content">
-                <div className="summary-shell">
-                    <div className="summary-topbar">
-                        <div className="summary-title">
-                            <span className="summary-badge">Summary</span>
-                            <span>สรุปข้อมูล Call ค้าง</span>
-                        </div>
-                        <div>
-                            <button className="print-button" onClick={() => {
-                                const w = window.open('', '_blank');
-                                w.document.write(`<html><head><title>สรุปข้อมูล</title><style>table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:8px;text-align:center}th{background:#f4f4f4}</style></head><body>${summaryHtml}</body></html>`);
-                                w.document.close();
-                                w.print();
-                            }}>
-                                <i className="fas fa-print"></i> <span>พิมพ์สรุป</span>
-                            </button>
-                            <span className="close" onClick={onClose}>×</span>
-                        </div>
+            <div className="premium-modal-content" style={{ maxWidth: '1200px' }}>
+                <div className="premium-modal-header">
+                    <h3><i className="fas fa-list-alt"></i> สรุปข้อมูล Call ค้าง</h3>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                        <button className="action-button" style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)' }} onClick={() => {
+                            const w = window.open('', '_blank');
+                            w.document.write(`<html><head><title>สรุปข้อมูล</title><style>table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:8px;text-align:center}th{background:#f4f4f4}</style></head><body>${summaryHtml}</body></html>`);
+                            w.document.close();
+                            w.print();
+                        }}>
+                            <i className="fas fa-print"></i> พิมพ์สรุป
+                        </button>
+                        <span className="premium-modal-close" onClick={onClose}>×</span>
                     </div>
-                    <div className="summary-body">
-                        <div dangerouslySetInnerHTML={{ __html: summaryHtml }}></div>
-                    </div>
+                </div>
+                <div className="premium-modal-body">
+                    <div dangerouslySetInnerHTML={{ __html: summaryHtml }}></div>
                 </div>
             </div>
         </div>
@@ -659,7 +665,7 @@ export function ActionModal({
 }) {
     if (!isOpen) return null;
     return (
-        <div className="modal">
+        <div className="modal" onClick={(e) => e.target.className === 'modal' && onClose()}>
             <div className="modal-content" style={{ maxWidth: '400px', textAlign: 'center' }}>
                 <span className="close" onClick={onClose}>×</span>
                 <h2>{title}</h2>
@@ -750,7 +756,7 @@ export function OutsideRequestModal({ isOpen, onClose, row, onSubmit }) {
     };
 
     return (
-        <div className="modal compact-modal-overlay">
+        <div className="modal" onClick={(e) => e.target.className.includes('modal') && onClose()}>
             <div className="modal-content compact-modal" style={{ maxWidth: '500px', padding: 0, overflow: 'hidden' }}>
                 <div style={{
                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',

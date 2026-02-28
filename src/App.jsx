@@ -231,73 +231,80 @@ function App() {
 
       {isLoggedIn && (
         <div id="appContent" className="app-content">
-          {isLoading && (
-            <div id="loading" className="loading">
-              <div className="spinner"></div>
-              <p>กำลังโหลดข้อมูล...</p>
-            </div>
-          )}
-
           <AppHeader user={currentUser} onLogout={() => setIsLoggedIn(false)} lastUpdated={lastUpdated} />
 
-          <DashboardCards
-            data={summary}
-            onCardClick={handleDashboardClick}
-            activeCard={dashboardFilter}
-          />
-          <AnalyticsCards
-            data={summary}
-            onOpenGraph={() => setGraphOpen(true)}
-            onOpenSpareSummary={() => window.open('?page=spare-summary', '_blank')}
-            onOver7Click={handleOver7Click}
-            onWaitingResponseClick={handleWaitingResponseClick}
-            onMaxCardClick={handleMaxCardClick}
-            dashboardFilter={dashboardFilter}
-          />
+          {isLoading ? (
+            <div id="loading" className="loading show">
+              <div className="spinner-container">
+                <div className="cute-spinner">
+                  <i className="fas fa-cog fa-spin"></i>
+                  <i className="fas fa-tools"></i>
+                </div>
+                <p>กำลังโหลดข้อมูล...</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              <DashboardCards
+                data={summary}
+                onCardClick={handleDashboardClick}
+                activeCard={dashboardFilter}
+              />
+              <AnalyticsCards
+                data={summary}
+                onOpenGraph={() => setGraphOpen(true)}
+                onOpenSpareSummary={() => window.open('?page=spare-summary', '_blank')}
+                onOver7Click={handleOver7Click}
+                onWaitingResponseClick={handleWaitingResponseClick}
+                onMaxCardClick={handleMaxCardClick}
+                dashboardFilter={dashboardFilter}
+              />
 
-          <ControlPanel
-            searchTerm={searchTerm}
-            onSearchChange={setSearchTerm}
-            onSearch={() => setCurrentPage(1)}
-            onPrintTable={() => window.print()}
-            onExportExcel={() => alert("Export functionality")}
-            onOpenSummary={() => setSummaryOpen(true)}
-            onUpdateGuide={() => { }}
-            onRefresh={refreshData}
-            lastUpdated={lastUpdated}
-            availableFilters={availableFilters}
-            teamPlantFilter={teamPlantFilter}
-            pendingUnitFilter={pendingUnitFilter}
-            stockAnswerFilter={stockAnswerFilter}
-            statusCallFilter={statusCallFilter}
-            onTeamPlantChange={(v) => { setTeamPlantFilter(v); setCurrentPage(1); }}
-            onPendingUnitChange={(v) => { setPendingUnitFilter(v); setCurrentPage(1); }}
-            onStockAnswerChange={(v) => { setStockAnswerFilter(v); setCurrentPage(1); }}
-            onStatusCallChange={(v) => { setStatusCallFilter(v); setCurrentPage(1); }}
-          />
+              <ControlPanel
+                searchTerm={searchTerm}
+                onSearchChange={setSearchTerm}
+                onSearch={() => setCurrentPage(1)}
+                onPrintTable={() => window.print()}
+                onExportExcel={() => alert("Export functionality")}
+                onOpenSummary={() => setSummaryOpen(true)}
+                onUpdateGuide={() => { }}
+                onRefresh={refreshData}
+                lastUpdated={lastUpdated}
+                availableFilters={availableFilters}
+                teamPlantFilter={teamPlantFilter}
+                pendingUnitFilter={pendingUnitFilter}
+                stockAnswerFilter={stockAnswerFilter}
+                statusCallFilter={statusCallFilter}
+                onTeamPlantChange={(v) => { setTeamPlantFilter(v); setCurrentPage(1); }}
+                onPendingUnitChange={(v) => { setPendingUnitFilter(v); setCurrentPage(1); }}
+                onStockAnswerChange={(v) => { setStockAnswerFilter(v); setCurrentPage(1); }}
+                onStatusCallChange={(v) => { setStatusCallFilter(v); setCurrentPage(1); }}
+              />
 
-          <DataTable
-            data={paginatedData}
-            isLoading={isLoading}
-            currentPage={currentPage}
-            itemsPerPage={itemsPerPage}
-            totalPages={totalPages}
-            onPageChange={setCurrentPage}
-            onItemsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
-            selectedRows={selectedRows}
-            onSelectAll={(e) => setSelectedRows(e.target.checked ? paginatedData.map(r => r.id) : [])}
-            onSelectRow={(id) => setSelectedRows(prev => prev.includes(id) ? prev.filter(r => r !== id) : [...prev, id])}
-            sortConfig={sortConfig}
-            onSort={handleSort}
-            onPoClick={handlePoClick}
-            onPrClick={handlePrClick}
-            onOtherPlantClick={handleOtherPlantClick}
-            onStatusXClick={handleStatusXClick}
-            onStatusGroupClick={handleStatusGroupClick}
-            onDetailClick={handleDetailClick}
-            onNawaClick={handleNawaClick}
-            onTicketClick={handleTicketClick}
-          />
+              <DataTable
+                data={paginatedData}
+                isLoading={isLoading}
+                currentPage={currentPage}
+                itemsPerPage={itemsPerPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                onItemsPerPageChange={(val) => { setItemsPerPage(val); setCurrentPage(1); }}
+                selectedRows={selectedRows}
+                onSelectAll={(e) => setSelectedRows(e.target.checked ? paginatedData.map(r => r.id) : [])}
+                onSelectRow={(id) => setSelectedRows(prev => prev.includes(id) ? prev.filter(r => r !== id) : [...prev, id])}
+                sortConfig={sortConfig}
+                onSort={handleSort}
+                onPoClick={handlePoClick}
+                onPrClick={handlePrClick}
+                onOtherPlantClick={handleOtherPlantClick}
+                onStatusXClick={handleStatusXClick}
+                onStatusGroupClick={handleStatusGroupClick}
+                onDetailClick={handleDetailClick}
+                onNawaClick={handleNawaClick}
+                onTicketClick={handleTicketClick}
+              />
+            </>
+          )}
 
           <GraphModal
             isOpen={graphOpen}
