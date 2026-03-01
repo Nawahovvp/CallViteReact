@@ -15,6 +15,7 @@ import { PoDetailsModal, PrDetailsModal, OtherPlantModal, StatusEditModal, Proje
 import { useAppData } from './hooks/useAppData';
 import { PLANT_MAPPING, exportToCSV } from './utils/helpers';
 import SpareSummaryPage from './components/SpareSummaryPage';
+import GMSummaryPage from './components/GMSummaryPage';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -61,6 +62,7 @@ function App() {
   const [graphOpen, setGraphOpen] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [spareSummaryOpen, setSpareSummaryOpen] = useState(false);
+  const [gmSummaryOpen, setGmSummaryOpen] = useState(false);
 
   // Table interaction modal states
   const [poModal, setPoModal] = useState({ open: false, row: null });
@@ -156,7 +158,11 @@ function App() {
     setCurrentPage(1);
   };
 
-  const handleMaxCardClick = () => {
+  const handleMaxCardClick = (type) => {
+    if (type === 'gmSummary') {
+      setGmSummaryOpen(true);
+      return;
+    }
     if (summary.maxPendingUnit && summary.maxPendingUnit !== '-') {
       setPendingUnitFilter(summary.maxPendingUnit);
       setDashboardFilter(null);
@@ -231,6 +237,16 @@ function App() {
         rawSources={rawSources}
         isLoading={isLoading}
         onClose={() => window.close()}
+      />
+    );
+  }
+
+  if (currentPagePath === 'gm-summary' || gmSummaryOpen) {
+    return (
+      <GMSummaryPage
+        data={allData}
+        summary={summary}
+        onClose={() => setGmSummaryOpen(false)}
       />
     );
   }

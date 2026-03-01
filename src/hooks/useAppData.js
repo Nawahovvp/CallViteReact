@@ -105,6 +105,9 @@ export function useAppData() {
     const getFilteredData = useCallback((excludeType = null) => {
         return processedData.filter(row => {
             if (!row) return false;
+            const ticket = row["Ticket Number"];
+            if (!ticket || String(ticket).trim() === "" || String(ticket).trim() === "-") return false;
+
             const cleanTP = getCleanTeamPlant(row["TeamPlant"]);
 
             // TeamPlant filter

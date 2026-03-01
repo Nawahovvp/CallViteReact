@@ -4255,3 +4255,207 @@
     font-weight: 800;
     color: #20c997;
 }
+/* GM Executive Dashboard Styles */
+.gm-summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.executive-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.gm-performance-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.gm-performance-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: var(--info-color);
+}
+
+.gm-performance-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+    border-color: var(--info-color);
+}
+
+.gm-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.gm-name-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.gm-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-secondary);
+    font-weight: 700;
+}
+
+.gm-main-name {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.gm-score-ring {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 14px;
+    position: relative;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.gm-score-ring.high {
+    color: var(--success-color);
+    border: 3px solid var(--success-color);
+}
+
+.gm-score-ring.mid {
+    color: var(--info-color);
+    border: 3px solid var(--info-color);
+}
+
+.gm-score-ring.low {
+    color: var(--danger-color);
+    border: 3px solid var(--danger-color);
+}
+
+.gm-metrics-mini {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.mini-stat {
+    padding: 8px 12px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.02);
+    display: flex;
+    flex-direction: column;
+}
+
+.mini-stat-label {
+    font-size: 10px;
+    color: var(--text-secondary);
+    font-weight: 600;
+}
+
+.mini-stat-value {
+    font-size: 15px;
+    font-weight: 700;
+}
+
+.gm-status-distribution {
+    display: flex;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 10px 0;
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.dist-segment {
+    height: 100%;
+    transition: width 0.5s ease;
+}
+
+.dist-success {
+    background: var(--success-color);
+}
+
+.dist-pending {
+    background: var(--info-color);
+}
+
+.dist-overdue {
+    background: var(--danger-color);
+}
+
+.dist-other {
+    background: #b1b1b1;
+}
+
+.gm-backlog-list {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.backlog-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    padding: 6px 10px;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 6px;
+}
+
+.backlog-unit {
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.backlog-count {
+    font-weight: 800;
+    color: var(--text-primary);
+}
+
+.gm-summary-fab {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: var(--info-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    z-index: 1000;
+    transition: all 0.3s;
+}
+
+.gm-summary-fab:hover {
+    transform: scale(1.1) rotate(5deg);
+    background: #2980b9;
+}

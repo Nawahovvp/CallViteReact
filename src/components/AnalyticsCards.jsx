@@ -72,6 +72,11 @@ export default function AnalyticsCards({
                 <h3><i className="fas fa-list-alt"></i> สรุปอะไหล่</h3>
                 <div className="value"><i className="fas fa-list-alt"></i></div>
             </div>
+
+            <div id="gmSummaryCard" className="dashboard-card" style={{ cursor: 'pointer', background: 'linear-gradient(135deg, #1e3c72, #2a5298)' }} onClick={() => onMaxCardClick?.('gmSummary')}>
+                <h3><i className="fas fa-chart-pie"></i> สรุป GM (Executive)</h3>
+                <div className="value"><i className="fas fa-user-tie"></i></div>
+            </div>
         </>
     );
 }
