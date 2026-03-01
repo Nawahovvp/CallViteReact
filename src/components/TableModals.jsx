@@ -2,36 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { normalizeMaterial, getCleanTeamPlant, getDesc } from '../utils/helpers';
 import { saveToGoogleSheet } from '../services/api';
 
-// ===== PLANT_MAPPING for OtherPlant reverse lookup =====
-const PLANT_MAPPING = {
-    "Stock กทม": "0301",
-    "Stock ระยอง": "0369",
-    "Stock วิภาวดี 62": "0326",
-    "Stock ขอนแก่น": "0319",
-    "Stock โคราช": "0309",
-    "Stock เชียงใหม่": "0366",
-    "Stock พระราม 3": "0304",
-    "Stock พิษณุโลก": "0312",
-    "Stock ภูเก็ต": "0313",
-    "Stock ราชบุรี": "0305",
-    "Stock ลำปาง": "0320",
-    "Stock ศรีราชา": "0311",
-    "Stock สุราษฎร์": "0307",
-    "Stock ประเวศ": "0330",
-    // New additional mappings
-    "Stock SA ฉะเชิงเทรา": "0367",
-    "Stock SA บางบัวทอง": "0364",
-    "Stock SA ปัตตานี": "0324",
-    "Stock SA ปากเกร็ด": "0363",
-    "Stock SA ร้อยเอ็ด": "0368",
-    "Stock SA ลำลูกกา": "0323",
-    "Stock SA สงขลา": "0303",
-    "Stock SA สมุทรปราการ": "0365",
-    "Stock SA หนองแขม": "0362",
-    "Stock SA อยุธยา": "0315",
-    "Stock SA อุดรธานี1": "0310",
-    "Stock SA อุดรธานี2": "0322"
-};
+const { PLANT_MAPPING } = require('../utils/helpers');
 
 const REVERSE_PLANT_MAP = {};
 for (const [name, code] of Object.entries(PLANT_MAPPING)) {

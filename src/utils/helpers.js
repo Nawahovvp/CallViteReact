@@ -49,6 +49,16 @@ export const PLANT_MAPPING = {
     "Stock ประเวศ": "0330",
     "Stock SA ฉะเชิงเทรา": "0367",
     "Stock SA บางบัวทอง": "0364",
+    "Stock SA ปัตตานี": "0324",
+    "Stock SA ปากเกร็ด": "0363",
+    "Stock SA ร้อยเอ็ด": "0368",
+    "Stock SA ลำลูกกา": "0323",
+    "Stock SA สงขลา": "0303",
+    "Stock SA สมุทรปราการ": "0365",
+    "Stock SA หนองแขม": "0362",
+    "Stock SA อยุธยา": "0315",
+    "Stock SA อุดรธานี1": "0310",
+    "Stock SA อุดรธานี2": "0322",
 };
 
 // Data computations
@@ -292,9 +302,14 @@ export function processRawData(
         r["Request"] = reqQty !== undefined ? reqQty : "";
 
         // Plant Stock attachment
-        let teamPlant = r["TeamPlant"];
-        if (teamPlant && PLANT_MAPPING[teamPlant]) {
-            const plantCode = PLANT_MAPPING[teamPlant];
+        let teamPlant = r["ศูนย์พื้นที่"] || r["TeamPlant"];
+        let plantCode = null;
+        if (teamPlant) {
+            const tp = teamPlant.toString().trim();
+            plantCode = PLANT_MAPPING[tp] || PLANT_MAPPING[`Stock ${tp}`] || PLANT_MAPPING[tp.replace(/^Stock\s+/i, '')];
+        }
+
+        if (plantCode) {
             const pKey = `${plantCode}_${mat}`;
             const qty = plantStock[pKey];
             r["QtyPlant"] = qty !== undefined && qty > 0 ? qty : "";
