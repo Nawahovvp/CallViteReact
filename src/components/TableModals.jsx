@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { normalizeMaterial, getCleanTeamPlant, getDesc } from '../utils/helpers';
 import { saveToGoogleSheet } from '../services/api';
 
-const { PLANT_MAPPING } = require('../utils/helpers');
+import { PLANT_MAPPING } from '../utils/helpers';
 
 const REVERSE_PLANT_MAP = {};
 for (const [name, code] of Object.entries(PLANT_MAPPING)) {
@@ -394,18 +394,20 @@ export function StatusEditModal({ isOpen, onClose, row, allData, onSaved }) {
 }
 
 // ===== Project Modal (StatusGroup click) =====
-const PROJECT_STATUS_OPTIONS = ["Project", "รอทดแทน"];
+const PROJECT_STATUS_OPTIONS = ["SPACIAL", "รอทดแทน"];
 
 export function ProjectModal({ isOpen, onClose, row, onSaved }) {
-    const [selectedStatusCall, setSelectedStatusCall] = useState('Project');
+    const [selectedStatusCall, setSelectedStatusCall] = useState('SPACIAL');
     const [projectInput, setProjectInput] = useState('');
     const [savingAction, setSavingAction] = useState(null);
 
     React.useEffect(() => {
         if (row) {
-            const currentStatusCall = row.StatusCall === "รอทดแทน" ? "รอทดแทน" : "Project";
+            const currentStatusCall = row.StatusCall === "รอทดแทน" ? "รอทดแทน" : "SPACIAL";
             setSelectedStatusCall(currentStatusCall);
-            setProjectInput(row.Answer1 && row.Answer1 !== "-" ? row.Answer1 : "");
+            // Only show data if it's from the manual spreadsheet (_isManualProject)
+            const manualValue = row._isManualProject ? row.Answer1 : "";
+            setProjectInput(manualValue && manualValue !== "-" && manualValue !== "ไม่ระบุ" ? manualValue : "");
         }
     }, [row]);
 
@@ -440,7 +442,7 @@ export function ProjectModal({ isOpen, onClose, row, onSaved }) {
         <div className="modal" style={{ zIndex: 1200 }}>
             <div className="modal-content" style={{ maxWidth: '500px' }}>
                 <span className="close" onClick={onClose}>&times;</span>
-                <h3 style={{ color: 'var(--header-bg)', marginBottom: 15 }}>จัดการ Project / รอทดแทน</h3>
+                <h3 style={{ color: 'var(--header-bg)', marginBottom: 15 }}>จัดการ SPACIAL / รอทดแทน</h3>
                 <div style={{ marginBottom: 15 }}><strong>Ticket:</strong> {ticket}</div>
 
                 <div style={{ marginBottom: 15 }}>
@@ -465,12 +467,12 @@ export function ProjectModal({ isOpen, onClose, row, onSaved }) {
                 </div>
 
                 <div style={{ marginBottom: 15 }}>
-                    <label style={{ fontWeight: 'bold', display: 'block', marginBottom: 5 }}>Project / รายละเอียด:</label>
+                    <label style={{ fontWeight: 'bold', display: 'block', marginBottom: 5 }}>SPACIAL / รายละเอียด:</label>
                     <input
                         type="text"
                         value={projectInput}
                         onChange={(e) => setProjectInput(e.target.value)}
-                        placeholder="ระบุ Project หรือรายละเอียด"
+                        placeholder="ระบุ SPACIAL หรือรายละเอียด"
                         style={{ width: '100%', padding: '8px 12px', fontSize: 14, borderRadius: 8, border: '1px solid #ccc', boxSizing: 'border-box' }}
                     />
                 </div>

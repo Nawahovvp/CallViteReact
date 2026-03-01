@@ -30,7 +30,7 @@ const CHART_COLORS = {
     "เปิดรหัสใหม่": '#007bff',
     "แจ้งCodeผิด": '#e83e8c',
     "รอทดแทน": '#ffc107',
-    "Project": '#343a40',
+    "SPACIAL": '#343a40',
     "ไม่ระบุ": '#6c757d'
 };
 
@@ -178,24 +178,31 @@ export function GraphModal({ isOpen, onClose, data = [], onFilterPendingUnit }) 
 
 // ===== Summary Modal (Pivot: TeamPlant × StatusCall) =====
 export function SummaryModal({ isOpen, onClose, data = [] }) {
-    const summaryHtml = useMemo(() => {
-        if (!data || data.length === 0) return '<p>ไม่มีข้อมูล</p>';
+    const summaryData = useMemo(() => {
+        if (!data || data.length === 0) return null;
 
         const ticketCounts = {};
         const pivotData = {};
         const teamPlantSet = new Set();
         const statusCallSet = new Set();
+        let waitingResponseCount = 0;
+        let overdueCount = 0;
 
         data.forEach(row => {
             const ticket = row["Ticket Number"];
             if (ticketCounts[ticket]) return;
             ticketCounts[ticket] = true;
+
             const tp = getCleanTeamPlant(row["TeamPlant"] || "ไม่ระบุ");
             const status = row["StatusCall"] || "ไม่ระบุ";
             teamPlantSet.add(tp);
             statusCallSet.add(status);
+
             if (!pivotData[tp]) pivotData[tp] = {};
             pivotData[tp][status] = (pivotData[tp][status] || 0) + 1;
+
+            if (row['คลังตอบ'] === 'รอตรวจสอบ') waitingResponseCount++;
+            if ((parseFloat(row['DayRepair']) || 0) > 7) overdueCount++;
         });
 
         const teamPlants = [...teamPlantSet];
@@ -208,64 +215,246 @@ export function SummaryModal({ isOpen, onClose, data = [] }) {
             return { tp, total };
         }).sort((a, b) => b.total - a.total);
 
-        const headerCells = statusCalls.map(s => `<th class='fixed-width'>${s}</th>`).join('');
-        const bodyRows = sorted.map(({ tp, total }) => {
-            const cells = statusCalls.map(s => {
-                const val = pivotData[tp]?.[s] || 0;
-                return `<td class='fixed-width'>${val === 0 ? '-' : val}</td>`;
-            }).join('');
-            return `<tr><td>${tp}</td><td class='fixed-width'>${total === 0 ? '-' : total}</td>${cells}</tr>`;
-        }).join('');
+        // Calculate totals for each status
+        const columnTotals = statusCalls.map(s => {
+            return teamPlants.reduce((sum, tp) => sum + (pivotData[tp]?.[s] || 0), 0);
+        });
 
-        const totalRow = statusCalls.map(s => {
-            const total = teamPlants.reduce((sum, tp) => sum + (pivotData[tp]?.[s] || 0), 0);
-            return `<td class='fixed-width'><strong>${total === 0 ? '-' : total}</strong></td>`;
-        }).join('');
-
-        return `
-            <div style="display: flex; gap: 20px; margin-bottom: 20px;">
-                <div class="stat-card" style="flex: 1; display: flex; align-items: center; gap: 15px; background: rgba(0,123,255,0.05);">
-                    <div style="width: 40px; height: 40px; border-radius: 50%; background: var(--header-bg); color: #fff; display: flex; align-items: center; justify-content: center;">
-                        <i class="fas fa-phone-alt"></i>
-                    </div>
-                    <div>
-                        <div style="font-size: 12px; color: var(--text-secondary);">จำนวน Call ทั้งหมด</div>
-                        <div style="font-size: 20px; font-weight: 800; color: var(--header-bg);">${totalCalls} Call</div>
-                    </div>
-                </div>
-            </div>
-            <div class="compact-table-wrapper" style="max-height: 65vh; overflow: auto;">
-                <table class="compact-table">
-                    <thead><tr><th>ศูนย์พื้นที่</th><th>รวม</th>${headerCells}</tr></thead>
-                    <tbody>${bodyRows}
-                    <tr style="font-weight: 800; background: rgba(0,0,0,0.03);"><td>รวม</td><td>${totalCalls === 0 ? '-' : totalCalls}</td>${totalRow}</tr>
-                    </tbody>
-                </table>
-            </div>`;
+        return {
+            totalCalls,
+            waitingResponseCount,
+            overdueCount,
+            statusCalls,
+            sorted,
+            pivotData,
+            columnTotals
+        };
     }, [data]);
 
+    const handlePrint = () => {
+        const printContent = document.getElementById('summary-print-area');
+        if (!printContent) return;
+        const w = window.open('', '_blank');
+        w.document.write(`<html><head><title>สรุปข้อมูล Call ค้าง</title>
+            <style>
+                body { font-family: 'Prompt', sans-serif; padding: 20px; }
+                .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
+                .stat-card { padding: 15px; border: 1px solid #ddd; border-radius: 10px; text-align: center; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+                th { background: #f8f9fa; font-weight: bold; }
+                .text-left { text-align: left; }
+                .total-row { font-weight: bold; background: #eee; }
+            </style>
+        </head><body>${printContent.innerHTML}</body></html>`);
+        w.document.close();
+        w.print();
+    };
+
     if (!isOpen) return null;
+
     return (
         <div className="modal" onClick={(e) => e.target.className === 'modal' && onClose()}>
             <div className="premium-modal-content" style={{ maxWidth: '1200px' }}>
                 <div className="premium-modal-header">
-                    <h3><i className="fas fa-list-alt"></i> สรุปข้อมูล Call ค้าง</h3>
+                    <h3><i className="fas fa-chart-pie" style={{ marginRight: 10 }}></i> สรุปข้อมูล Call ค้าง</h3>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <button className="action-button" style={{ background: 'rgba(255,255,255,0.2)', color: '#fff', border: '1px solid rgba(255,255,255,0.3)' }} onClick={() => {
-                            const w = window.open('', '_blank');
-                            w.document.write(`<html><head><title>สรุปข้อมูล</title><style>table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:8px;text-align:center}th{background:#f4f4f4}</style></head><body>${summaryHtml}</body></html>`);
-                            w.document.close();
-                            w.print();
-                        }}>
+                        <button className="action-button premium-button" onClick={handlePrint}>
                             <i className="fas fa-print"></i> พิมพ์สรุป
                         </button>
                         <span className="premium-modal-close" onClick={onClose}>×</span>
                     </div>
                 </div>
                 <div className="premium-modal-body">
-                    <div dangerouslySetInnerHTML={{ __html: summaryHtml }}></div>
+                    {!summaryData ? (
+                        <div style={{ textAlign: 'center', padding: '40px' }}>ไม่มีข้อมูล</div>
+                    ) : (
+                        <div id="summary-print-area">
+                            <div className="summary-stat-grid" style={{
+                                display: 'grid',
+                                gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+                                gap: '20px',
+                                marginBottom: '25px'
+                            }}>
+                                <div className="stat-card" style={{
+                                    background: 'linear-gradient(135deg, #007bff, #0056b3)',
+                                    color: 'white',
+                                    padding: '20px',
+                                    borderRadius: '16px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '20px',
+                                    boxShadow: '0 8px 16px rgba(0,123,255,0.2)'
+                                }}>
+                                    <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>
+                                        <i className="fas fa-phone-alt"></i>
+                                    </div>
+                                    <div>
+                                        <div style={{ fontSize: '13px', opacity: 0.9 }}>จำนวน Call ทั้งหมด</div>
+                                        <div style={{ fontSize: '28px', fontWeight: '800' }}>{summaryData.totalCalls} Call</div>
+                                    </div>
+                                </div>
+
+                                <div className="stat-card" style={{
+                                    background: 'linear-gradient(135deg, #ffc107, #e0a800)',
+                                    color: 'white',
+                                    padding: '20px',
+                                    borderRadius: '16px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '20px',
+                                    boxShadow: '0 8px 16px rgba(255,193,7,0.2)'
+                                }}>
+                                    <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>
+                                        <i className="fas fa-clock"></i>
+                                    </div>
+                                    <div>
+                                        <div style={{ fontSize: '13px', opacity: 0.9 }}>รอตรวจสอบ (คลังตอบ)</div>
+                                        <div style={{ fontSize: '28px', fontWeight: '800' }}>{summaryData.waitingResponseCount} Call</div>
+                                    </div>
+                                </div>
+
+                                <div className="stat-card" style={{
+                                    background: 'linear-gradient(135deg, #dc3545, #c82333)',
+                                    color: 'white',
+                                    padding: '20px',
+                                    borderRadius: '16px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '20px',
+                                    boxShadow: '0 8px 16px rgba(220,53,69,0.2)'
+                                }}>
+                                    <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: 'rgba(255,255,255,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>
+                                        <i className="fas fa-exclamation-triangle"></i>
+                                    </div>
+                                    <div>
+                                        <div style={{ fontSize: '13px', opacity: 0.9 }}>ค้างมากกว่า 7 วัน</div>
+                                        <div style={{ fontSize: '28px', fontWeight: '800' }}>{summaryData.overdueCount} Call</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="premium-table-container" style={{
+                                background: 'white',
+                                borderRadius: '16px',
+                                border: '1px solid #eef2f7',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.03)',
+                                overflow: 'hidden'
+                            }}>
+                                <div style={{ maxHeight: '60vh', overflow: 'auto' }}>
+                                    <table className="summary-pivot-table" style={{
+                                        width: '100%',
+                                        borderCollapse: 'separate',
+                                        borderSpacing: 0,
+                                        fontSize: '13px'
+                                    }}>
+                                        <thead>
+                                            <tr>
+                                                <th style={{
+                                                    position: 'sticky', top: 0, left: 0, zIndex: 10,
+                                                    background: '#f8f9fa', padding: '15px 20px',
+                                                    borderBottom: '2px solid #dee2e6', textAlign: 'left',
+                                                    color: '#2d3748', minWidth: '180px'
+                                                }}>ศูนย์พื้นที่</th>
+                                                <th style={{
+                                                    position: 'sticky', top: 0, zIndex: 9,
+                                                    background: '#f8f9fa', padding: '15px 20px',
+                                                    borderBottom: '2px solid #dee2e6', textAlign: 'center',
+                                                    color: '#2d3748', fontWeight: 'bold'
+                                                }}>รวม</th>
+                                                {summaryData.statusCalls.map(status => (
+                                                    <th key={status} style={{
+                                                        position: 'sticky', top: 0, zIndex: 9,
+                                                        background: '#f8f9fa', padding: '15px 15px',
+                                                        borderBottom: '2px solid #dee2e6', textAlign: 'center',
+                                                        color: CHART_COLORS[status] || '#495057',
+                                                        whiteSpace: 'nowrap'
+                                                    }}>{status}</th>
+                                                ))}
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {summaryData.sorted.map(({ tp, total }, rowIndex) => (
+                                                <tr key={tp} style={{
+                                                    background: rowIndex % 2 === 0 ? '#fff' : '#fafbfc',
+                                                    transition: 'all 0.2s'
+                                                }} className="summary-row-hover">
+                                                    <td style={{
+                                                        position: 'sticky', left: 0, zIndex: 5,
+                                                        background: rowIndex % 2 === 0 ? '#fff' : '#fafbfc',
+                                                        padding: '12px 20px', borderBottom: '1px solid #edf2f7',
+                                                        fontWeight: '500', color: '#2d3748'
+                                                    }}>{tp}</td>
+                                                    <td style={{
+                                                        padding: '12px 20px', borderBottom: '1px solid #edf2f7',
+                                                        textAlign: 'center', fontWeight: 'bold', color: '#007bff'
+                                                    }}>{total || '-'}</td>
+                                                    {summaryData.statusCalls.map(status => {
+                                                        const val = summaryData.pivotData[tp]?.[status] || 0;
+                                                        return (
+                                                            <td key={status} style={{
+                                                                padding: '12px 15px', borderBottom: '1px solid #edf2f7',
+                                                                textAlign: 'center', color: val > 0 ? '#4a5568' : '#cbd5e0'
+                                                            }}>{val || '-'}</td>
+                                                        );
+                                                    })}
+                                                </tr>
+                                            ))}
+                                            <tr style={{ background: '#f8f9fa', fontWeight: '800' }}>
+                                                <td style={{
+                                                    position: 'sticky', left: 0, zIndex: 5,
+                                                    background: '#f8f9fa', padding: '15px 20px',
+                                                    borderTop: '2px solid #dee2e6', color: '#1a202c'
+                                                }}>รวมทั้งหมด</td>
+                                                <td style={{
+                                                    padding: '15px 20px', borderTop: '2px solid #dee2e6',
+                                                    textAlign: 'center', color: '#007bff'
+                                                }}>{summaryData.totalCalls}</td>
+                                                {summaryData.columnTotals.map((total, idx) => (
+                                                    <td key={idx} style={{
+                                                        padding: '15px 15px', borderTop: '2px solid #dee2e6',
+                                                        textAlign: 'center', color: total > 0 ? '#1a202c' : '#cbd5e0'
+                                                    }}>{total || '-'}</td>
+                                                ))}
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
+            <style>{`
+                .summary-row-hover:hover {
+                    background-color: #f1f8ff !important;
+                }
+                .summary-row-hover:hover td {
+                    background-color: #f1f8ff !important;
+                }
+                .premium-button {
+                    background: rgba(255,255,255,0.2);
+                    color: white;
+                    border: 1px solid rgba(255,255,255,0.3);
+                    padding: 8px 16px;
+                    border-radius: 10px;
+                    font-weight: 500;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .premium-button:hover {
+                    background: rgba(255,255,255,0.3);
+                    transform: translateY(-1px);
+                }
+                @media print {
+                    .modal { position: static; background: none; }
+                    .premium-modal-content { box-shadow: none; border: none; }
+                    .premium-modal-header, .premium-modal-close { display: none; }
+                    .premium-table-container { box-shadow: none; border: 1px solid #ddd; }
+                    th { position: static !important; }
+                    td { position: static !important; }
+                }
+            `}</style>
         </div>
     );
 }

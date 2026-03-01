@@ -13,7 +13,7 @@ const STATUS_COLORS = {
     "ดึงจากคลังอื่น": "#3f51b5",
     "เปิดรหัสใหม่": "#6f42c1",
     "ขอซื้อขอซ่อม": "#20c997",
-    "Project": "#6c757d",
+    "SPACIAL": "#6c757d",
     "รอทดแทน": "#ffc107",
     "แจ้งCodeผิด": "#e83e8c"
 };
@@ -108,7 +108,7 @@ export default function ControlPanel({
     onSearchChange,
     onSearch,
     onPrintTable,
-    onExportExcel,
+    onExportCSV,
     onOpenSummary,
     onUpdateGuide,
     onRefresh,
@@ -174,8 +174,8 @@ export default function ControlPanel({
                 <button id="printTableButton" className="action-button" onClick={onPrintTable}>
                     <i className="fas fa-print"></i> พิมพ์
                 </button>
-                <button id="excelButton" className="action-button" onClick={onExportExcel}>
-                    <i className="fas fa-file-excel"></i> Excel
+                <button id="exportCsvButton" className="action-button" onClick={onExportCSV}>
+                    <i className="fas fa-file-csv"></i> Export CSV
                 </button>
                 <button id="summaryButton" className="action-button" onClick={onOpenSummary}>
                     <i className="fas fa-list"></i> สรุปข้อมูล

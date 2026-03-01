@@ -59,7 +59,40 @@ export const PLANT_MAPPING = {
     "Stock SA อยุธยา": "0315",
     "Stock SA อุดรธานี1": "0310",
     "Stock SA อุดรธานี2": "0322",
+    "0326": "SA นนทบุรี"
 };
+
+export const TABLE_COLUMNS = [
+    { key: 'StatusGroup', label: 'StatusCall' },
+    { key: 'DayRepair', label: 'ผ่านมา' },
+    { key: 'DateTime', label: 'วันที่แจ้ง' },
+    { key: 'Brand', label: 'Brand' },
+    { key: 'Call Type', label: 'Call Type' },
+    { key: 'Team', label: 'Team' },
+    { key: 'TeamPlant', label: 'ศูนย์พื้นที่' },
+    { key: 'ค้างหน่วยงาน', label: 'ค้างหน่วยงาน' },
+    { key: 'Ticket Number', label: 'Ticket Number' },
+    { key: 'Material', label: 'Material' },
+    { key: 'Description', label: 'Description' },
+    { key: 'Rebuilt', label: 'ทดแทน' },
+    { key: 'PR', label: 'PR' },
+    { key: 'PO', label: 'PO' },
+    { key: 'Nawa', label: 'นวนคร' },
+    { key: 'Vipa', label: 'วิภาวดี' },
+    { key: 'Request', label: 'นอกรอบ' },
+    { key: 'QtyPlant', label: 'คลังพื้นที่' },
+    { key: 'OtherPlant', label: 'พื้นที่อื่น' },
+    { key: 'PendingStockDays', label: 'ค้างStock' },
+    { key: 'StockStartDate', label: 'แจ้งคลัง' },
+    { key: 'คลังตอบ', label: 'คลังตอบ' },
+    { key: 'StatusCall', label: 'สถานะอะไหล่' },
+    { key: 'วันที่ตอบ', label: 'วันที่ตอบ' },
+    { key: 'UserAns', label: 'ผู้แจ้ง' },
+    { key: 'Answer1', label: 'แจ้งผล' },
+    { key: 'GM', label: 'GM' },
+    { key: 'Division', label: 'ฝ่าย' },
+    { key: 'Department', label: 'แผนก' },
+];
 
 // Data computations
 function computeRequestQuantities(data) {
@@ -229,7 +262,8 @@ export function processRawData(
     nawaData,
     plantStockData,
     newPartData,
-    projectData
+    projectData,
+    teamPlantData
 ) {
     // 1. Precalculate dictionaries
     const reqQ = computeRequestQuantities(requestData);
@@ -258,6 +292,20 @@ export function processRawData(
                 newPartMap.set(key, {
                     Status: (p["Status"] || p.StatusCall || "").toString().trim(),
                     Timestamp: p.Timestamp
+                });
+            }
+        });
+    }
+
+    const teamDetailsMap = new Map();
+    if (Array.isArray(teamPlantData)) {
+        teamPlantData.forEach(t => {
+            const teamName = String(t.Team || "").trim();
+            if (teamName) {
+                teamDetailsMap.set(teamName, {
+                    gm: t.GM || "-",
+                    division: t["ฝ่าย"] || "-",
+                    department: t["แผนก"] || "-"
                 });
             }
         });
@@ -369,6 +417,13 @@ export function processRawData(
         r['ค้างหน่วยงาน'] = r['ค้างหน่วยงาน'] || 'ไม่ระบุ';
         r['คลังตอบ'] = r['คลังตอบ'] || 'ไม่ระบุ';
 
+        // Map Team Details
+        const teamName = String(r.Team || "").trim();
+        const details = teamDetailsMap.get(teamName);
+        r.GM = details ? details.gm : "-";
+        r.Division = details ? details.division : "-";
+        r.Department = details ? details.department : "-";
+
         return r;
     });
 
@@ -399,8 +454,16 @@ export function processRawData(
 
         if (projectMap.has(ticket)) {
             const proj = projectMap.get(ticket);
-            if (proj.statusCall) statusCall = proj.statusCall;
-            rows.forEach(r => r['Answer1'] = proj.project || r['Answer1']);
+            if (proj.statusCall) {
+                statusCall = proj.statusCall === "Project" ? "SPACIAL" : proj.statusCall;
+                rows.forEach(r => r._isManualStatusCall = true);
+            }
+            if (proj.project) {
+                rows.forEach(r => {
+                    r['Answer1'] = proj.project;
+                    r._isManualProject = true;
+                });
+            }
         } else if (statusesToEval.includes("เปิดรหัสใหม่")) {
             statusCall = "เปิดรหัสใหม่";
         } else if (statusesToEval.includes("ขอซื้อขอซ่อม")) {
@@ -508,6 +571,7 @@ export function processRawData(
                 const customStatus = newPartMap.get(compositeKey).Status;
                 // DO NOT override StatusCall here, as it should remain the group-level status
                 r.StatusX = customStatus;    // Override StatusX so filtering/sorting works
+                r._isManualStatusX = true;   // Flag as manual override
             }
         });
 
@@ -537,8 +601,8 @@ export function processRawData(
             case "ดึงจากคลังอื่น": groupStatus = "ดึงจากคลังอื่น"; break;
             case "ระหว่างขนส่ง": groupStatus = "ระหว่างขนส่ง (ส่งสำเร็จ)"; break;
             case "เบิกศูนย์อะไหล่": groupStatus = "เบิกศูนย์อะไหล่"; break;
-            case "Project":
-            case "รอทดแทน": groupStatus = "Call (Spacial)"; break;
+            case "SPACIAL":
+            case "รอทดแทน": groupStatus = "SPACIAL"; break;
             case "ขอซื้อขอซ่อม": groupStatus = "ขอซื้อขอซ่อม"; break;
             case "แจ้งCodeผิด": groupStatus = "แจ้งCodeผิด"; break;
             case "เปิดรหัสใหม่": groupStatus = "เปิดรหัสใหม่"; break;
@@ -566,16 +630,20 @@ export function calculateSummary(processedData) {
         otherPlant: 0,
         success: 0,
         nawaVipa: 0,
-        project: 0,
+        spacial: 0,
         request: 0,
         newPart: 0,
         over7: 0,
         waitingResponse: 0,
         maxPendingUnit: "-",
-        maxPendingCount: 0
+        maxPendingCount: 0,
+        gmStats: [],
+        callTypeStats: []
     };
 
     const pendingUnitTicketCounts = {};
+    const gmTicketCounts = {};
+    const callTypeTicketCounts = {};
 
     Object.keys(ticketGroups).forEach(ticket => {
         const rows = ticketGroups[ticket];
@@ -586,7 +654,7 @@ export function calculateSummary(processedData) {
         if (groupStatus === 'ดึงจากคลังอื่น') stats.otherPlant++;
         if (groupStatus === 'ระหว่างขนส่ง (ส่งสำเร็จ)') stats.success++;
         if (groupStatus === 'เบิกศูนย์อะไหล่') stats.nawaVipa++;
-        if (groupStatus === 'Call (Spacial)') stats.project++;
+        if (groupStatus === 'SPACIAL') stats.spacial++;
         if (groupStatus === 'ขอซื้อขอซ่อม') stats.request++;
         if (groupStatus === 'เปิดรหัสใหม่') stats.newPart++;
 
@@ -601,11 +669,18 @@ export function calculateSummary(processedData) {
         // Aggregate ALL tickets for each unit to find the top unit
         rows.forEach(r => {
             const pendingUnit = r["ค้างหน่วยงาน"] || "ไม่ระบุ";
-            // Ignore "ไม่ระบุ" unless you specifically want to count it (the original code ignored it implicitly if not tracking it, wait it explicitly says !== 'ไม่ระบุ')
             if (pendingUnit !== "ไม่ระบุ") {
                 if (!pendingUnitTicketCounts[pendingUnit]) pendingUnitTicketCounts[pendingUnit] = new Set();
                 pendingUnitTicketCounts[pendingUnit].add(ticket);
             }
+
+            const gm = r.GM || "-";
+            if (!gmTicketCounts[gm]) gmTicketCounts[gm] = new Set();
+            gmTicketCounts[gm].add(ticket);
+
+            const callType = r["Call Type"] || "ไม่ระบุ";
+            if (!callTypeTicketCounts[callType]) callTypeTicketCounts[callType] = new Set();
+            callTypeTicketCounts[callType].add(ticket);
         });
     });
 
@@ -625,6 +700,56 @@ export function calculateSummary(processedData) {
     stats.maxPendingUnit = maxUnit;
     stats.maxPendingCount = maxCount;
 
+    // Convert sets to stats arrays
+    const totalTickets = stats.total;
+    const formatStats = (countsMap) => {
+        const stats = Object.entries(countsMap).map(([label, set]) => ({
+            label,
+            value: set.size,
+            percent: totalTickets > 0 ? (set.size / totalTickets * 100).toFixed(0) : 0
+        }));
+
+        // Grouping logic: "Name" and "Name_SA" should stay together
+        const groupMaxMap = {};
+        stats.forEach(item => {
+            const base = item.label.replace(/(_SA|\s_SA)$/i, '').trim();
+            groupMaxMap[base] = Math.max(groupMaxMap[base] || 0, item.value);
+        });
+
+        return stats.sort((a, b) => {
+            const baseA = a.label.replace(/(_SA|\s_SA)$/i, '').trim();
+            const baseB = b.label.replace(/(_SA|\s_SA)$/i, '').trim();
+
+            // 1. Sort by the maximum value found in the group (DESC)
+            if (groupMaxMap[baseB] !== groupMaxMap[baseA]) {
+                return groupMaxMap[baseB] - groupMaxMap[baseA];
+            }
+
+            // 2. Tie-break: Sort by base name alphabetically (ASC)
+            if (baseA !== baseB) {
+                return baseA.localeCompare(baseB, 'th');
+            }
+
+            // 3. Within same base group: Prioritize label WITHOUT _SA first
+            const isSaA = /(_SA|\s_SA)$/i.test(a.label);
+            const isSaB = /(_SA|\s_SA)$/i.test(b.label);
+            if (isSaA !== isSaB) {
+                return isSaA ? 1 : -1; // Normal first, SA second
+            }
+
+            // 4. Then sort by value (DESC)
+            if (b.value !== a.value) {
+                return b.value - a.value;
+            }
+
+            // 5. Finally alphabetical label
+            return a.label.localeCompare(b.label, 'th');
+        });
+    };
+
+    stats.gmStats = formatStats(gmTicketCounts);
+    stats.callTypeStats = formatStats(callTypeTicketCounts);
+
     const calcPercent = (val) => stats.total > 0 ? Math.round((val / stats.total) * 100) + '%' : '0%';
 
     stats.exceedLeadtimePercent = calcPercent(stats.exceedLeadtime);
@@ -632,7 +757,7 @@ export function calculateSummary(processedData) {
     stats.otherPlantPercent = calcPercent(stats.otherPlant);
     stats.successPercent = calcPercent(stats.success);
     stats.nawaVipaPercent = calcPercent(stats.nawaVipa);
-    stats.projectPercent = calcPercent(stats.project);
+    stats.spacialPercent = calcPercent(stats.spacial);
     stats.requestPercent = calcPercent(stats.request);
     stats.newPartPercent = calcPercent(stats.newPart);
     stats.over7Percent = calcPercent(stats.over7);
@@ -673,3 +798,39 @@ export function getDesc(row) {
 }
 
 
+export function exportToCSV(data, filename = 'Call_Export.csv') {
+    if (!data || data.length === 0) return;
+
+    // Use standardized columns for the export
+    const headers = TABLE_COLUMNS.map(col => col.label);
+    const keys = TABLE_COLUMNS.map(col => col.key);
+
+    const csvRows = [];
+    // Helper to escape values and wrap in quotes
+    const escapeCsv = (val) => {
+        const str = (val === undefined || val === null ? '' : '' + val).trim();
+        return `"${str.replace(/"/g, '""')}"`;
+    };
+
+    csvRows.push(headers.map(escapeCsv).join(','));
+
+    data.forEach(row => {
+        const values = keys.map(key => escapeCsv(row[key]));
+        csvRows.push(values.join(','));
+    });
+
+    const csvString = csvRows.join('\r\n'); // Use Windows newline for Excel compatibility
+    // Add UTF-8 BOM for Thai character support in Excel
+    const blob = new Blob(['\ufeff' + csvString], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+
+    if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', filename);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+}

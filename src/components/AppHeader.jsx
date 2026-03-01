@@ -65,8 +65,15 @@ export default function AppHeader({ user, onLogout, lastUpdated }) {
                             </div>
                             <div className="name">{user?.Name || '-'}</div>
                             <div className="meta">
-                                <span className="sheet-badge"><i className="fas fa-id-badge" style={{ marginRight: '6px' }}></i>{user?.IDRec || '-'}</span>
-                                <span style={{ marginTop: '6px' }}>หน่วยงาน: {user?.['หน่วยงาน'] || '-'} • ทีม: {user?.Unit || '-'} • Plant {user?.Plant || '-'}</span>
+                                <div style={{ display: 'flex', gap: '8px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                                    <span className="sheet-badge"><i className="fas fa-id-badge" style={{ marginRight: '6px' }}></i>{user?.IDRec || '-'}</span>
+                                    {user?.Status && user.Status !== 'None' && (
+                                        <span className="sheet-badge success" title="ระดับผู้ใช้งาน">
+                                            <i className="fas fa-user-shield" style={{ marginRight: '6px' }}></i>{user.Status}
+                                        </span>
+                                    )}
+                                </div>
+                                <span style={{ marginTop: '0' }}>หน่วยงาน: {user?.['หน่วยงาน'] || '-'} • ทีม: {user?.Unit || '-'} • Plant {user?.Plant || '-'}</span>
                             </div>
                         </div>
                         <div className="sheet-actions">

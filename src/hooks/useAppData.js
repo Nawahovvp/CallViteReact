@@ -16,6 +16,7 @@ export function useAppData() {
     const [pendingUnitFilter, setPendingUnitFilter] = useState('');
     const [stockAnswerFilter, setStockAnswerFilter] = useState('');
     const [statusCallFilter, setStatusCallFilter] = useState('');
+    const [gmFilter, setGmFilter] = useState(null); // New state for hierarchical filtering
 
     const fetchData = useCallback(async (showLoading = true) => {
         if (showLoading) setIsLoading(true);
@@ -32,7 +33,8 @@ export function useAppData() {
                 plantStockData,
                 newPartData,
                 projectData,
-                updateData
+                updateData,
+                teamPlantData
             } = await fetchAllData();
 
             const now = new Date();
@@ -77,7 +79,8 @@ export function useAppData() {
                 nawaData,
                 plantStockData,
                 newPartData,
-                projectData
+                projectData,
+                teamPlantData
             );
             setProcessedData(processed);
             setRawSources({ nawaRawData: nawaData, poRawData: poData, prRawData: prData, plantStockData: plantStockData });
@@ -128,17 +131,16 @@ export function useAppData() {
                 if (!match) return false;
             }
 
+            if (excludeType !== 'gm' && gmFilter && row.GM !== gmFilter) return false;
+
             return true;
         });
-    }, [processedData, teamPlantFilter, pendingUnitFilter, stockAnswerFilter, statusCallFilter, searchTerm]);
+    }, [processedData, teamPlantFilter, pendingUnitFilter, stockAnswerFilter, statusCallFilter, searchTerm, gmFilter]);
 
     // Apply dashboard card filter (matching original applyDashboardFilter)
     const applyDashboardFilter = useCallback((data, filter) => {
         if (!filter || !data) return data;
-        if (filter.startsWith && filter.startsWith('calltype_')) {
-            const type = filter.split('_')[1];
-            return data.filter(row => (row["Call Type"] || "") === type);
-        }
+
         switch (filter) {
             case 'pending': return data.filter(row => (row.StatusCall || "") === "รอของเข้า");
             case 'success': return data.filter(row => (row.StatusCall || "") === "ระหว่างขนส่ง");
@@ -149,8 +151,13 @@ export function useAppData() {
             case 'newPart': return data.filter(row => (row.StatusCall || "") === "เปิดรหัสใหม่");
             case 'exceedLeadtime': return data.filter(row => (row.StatusCall || "") === "เกินLeadtime");
             case 'nawaVipa': return data.filter(row => (row.StatusCall || "") === "เบิกศูนย์อะไหล่");
-            case 'project': return data.filter(row => (row.StatusCall || "") === "Project");
-            default: return data;
+            case 'spacial': return data.filter(row => (row.StatusCall || "") === "SPACIAL");
+            default:
+                if (filter.startsWith && filter.startsWith('calltype_')) {
+                    const typeName = filter.replace('calltype_', '');
+                    return data.filter(row => (row["Call Type"] || "") === typeName);
+                }
+                return data;
         }
     }, []);
 
@@ -158,8 +165,26 @@ export function useAppData() {
     const baseFilteredData = useMemo(() => getFilteredData(null), [getFilteredData]);
     const filteredData = useMemo(() => applyDashboardFilter([...baseFilteredData], dashboardFilter), [baseFilteredData, dashboardFilter, applyDashboardFilter]);
 
-    // Summary from filtered data
-    const summary = useMemo(() => calculateSummary(filteredData), [filteredData]);
+    // Summary calculation optimized for hierarchical/faceted view
+    const summary = useMemo(() => {
+        // 1. GM Stats: Filtered by everything EXCEPT GM filter (so we see all GMs)
+        const gmData = getFilteredData('gm');
+        const gmSummary = calculateSummary(gmData);
+
+        // 2. Dashboard Stats (Main cards): Filtered by GM selection
+        const dashboardSummary = calculateSummary(baseFilteredData);
+
+        // 3. Call Type Stats: Filtered by GM and ONLY Status (so other Call Type cards stay visible)
+        const statusOnlyFilter = (dashboardFilter && !dashboardFilter.startsWith('calltype_')) ? dashboardFilter : null;
+        const statusOnlyFilteredData = applyDashboardFilter([...baseFilteredData], statusOnlyFilter);
+        const callTypeSummary = calculateSummary(statusOnlyFilteredData);
+
+        return {
+            ...dashboardSummary, // Main stats from GM-filtered data
+            gmStats: gmSummary.gmStats, // GM cards from all-GM data
+            callTypeStats: callTypeSummary.callTypeStats // Call Type cards from fully filtered data
+        };
+    }, [getFilteredData, baseFilteredData, filteredData]);
 
     // Cross-filtered data for each filter panel
     const teamPlantFilterData = useMemo(() => applyDashboardFilter(getFilteredData('teamPlant'), dashboardFilter), [getFilteredData, dashboardFilter, applyDashboardFilter]);
@@ -277,6 +302,7 @@ export function useAppData() {
         statusCallFilter, setStatusCallFilter,
         searchTerm, setSearchTerm,
         dashboardFilter, setDashboardFilter,
+        gmFilter, setGmFilter,
         applyDashboardFilter,
         refreshData: () => fetchData(true),
         refreshDataBackground: () => fetchData(false),

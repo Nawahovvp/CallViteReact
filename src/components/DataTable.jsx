@@ -1,33 +1,6 @@
 import React from 'react';
+import { TABLE_COLUMNS as COLUMNS } from '../utils/helpers';
 
-const COLUMNS = [
-    { key: 'StatusGroup', label: 'StatusCall' },
-    { key: 'DayRepair', label: 'ผ่านมา' },
-    { key: 'DateTime', label: 'วันที่แจ้ง' },
-    { key: 'Brand', label: 'Brand' },
-    { key: 'Call Type', label: 'Call Type' },
-    { key: 'Team', label: 'Team' },
-    { key: 'TeamPlant', label: 'ศูนย์พื้นที่' },
-    { key: 'ค้างหน่วยงาน', label: 'ค้างหน่วยงาน' },
-    { key: 'Ticket Number', label: 'Ticket Number' },
-    { key: 'Material', label: 'Material' },
-    { key: 'Description', label: 'Description' },
-    { key: 'Rebuilt', label: 'ทดแทน' },
-    { key: 'PR', label: 'PR' },
-    { key: 'PO', label: 'PO' },
-    { key: 'Nawa', label: 'นวนคร' },
-    { key: 'Vipa', label: 'วิภาวดี' },
-    { key: 'Request', label: 'นอกรอบ' },
-    { key: 'QtyPlant', label: 'คลังพื้นที่' },
-    { key: 'OtherPlant', label: 'พื้นที่อื่น' },
-    { key: 'PendingStockDays', label: 'ค้างStock' },
-    { key: 'StockStartDate', label: 'แจ้งคลัง' },
-    { key: 'คลังตอบ', label: 'คลังตอบ' },
-    { key: 'StatusCall', label: 'สถานะอะไหล่' },
-    { key: 'วันที่ตอบ', label: 'วันที่ตอบ' },
-    { key: 'UserAns', label: 'ผู้แจ้ง' },
-    { key: 'Answer1', label: 'แจ้งผล' },
-];
 
 export default function DataTable({
     data = [],
@@ -113,13 +86,14 @@ export default function DataTable({
                                             <input type="checkbox" checked={selectedRows?.includes(row.id)} onChange={() => onSelectRow(row.id)} />
                                         </td>
                                         {/* StatusGroup */}
-                                        <td data-column="StatusGroup">
+                                        <td data-column="StatusGroup" className={row._isManualStatusCall ? 'manual-indicator' : ''}>
                                             <span style={{
                                                 cursor: 'pointer', textDecoration: 'underline',
                                                 color: getStatusColor(row['StatusCall']), fontWeight: 'bold'
                                             }} onClick={(e) => { e.stopPropagation(); onStatusGroupClick?.(row); }}>
                                                 {row['StatusCall']}
                                             </span>
+                                            {row._isManualStatusCall && <span className="manual-pill">Manual</span>}
                                         </td>
                                         {/* DayRepair */}
                                         <td data-column="DayRepair" style={{ textAlign: 'center' }}>
@@ -202,15 +176,19 @@ export default function DataTable({
                                             fontWeight: ['รอตรวจสอบ', 'ดำเนินการแล้ว'].includes(row['คลังตอบ']) ? 'bold' : 'normal'
                                         }}>{row['คลังตอบ']}</td>
                                         {/* StatusCall (StatusX) */}
-                                        <td data-column="StatusCall" style={{
+                                        <td data-column="StatusCall" className={row._isManualStatusX ? 'manual-indicator' : ''} style={{
                                             cursor: 'pointer', textDecoration: 'underline',
                                             color: getStatusColor(statusXVal), fontWeight: 'bold'
                                         }} onClick={(e) => { e.stopPropagation(); onStatusXClick?.(row); }}>
                                             {statusXVal}
+                                            {row._isManualStatusX && <span className="manual-pill">Manual</span>}
                                         </td>
                                         <td data-column="วันที่ตอบ">{row['วันที่ตอบ']}</td>
                                         <td data-column="UserAns">{row['UserAns']}</td>
                                         <td data-column="Answer1">{row['Answer1']}</td>
+                                        <td data-column="GM">{row['GM']}</td>
+                                        <td data-column="Division">{row['Division']}</td>
+                                        <td data-column="Department">{row['Department']}</td>
                                         {/* Detail */}
                                         <td data-column="detail">
                                             <button className="detail-button" onClick={() => onDetailClick?.(row)}>ดูรายละเอียด</button>
@@ -251,7 +229,7 @@ function getStatusColor(status) {
         "รอของเข้า": "var(--danger-color)", "เกินLeadtime": "#8b0000", "ดึงจากคลังอื่น": "#3f51b5",
         "เปิดรหัสใหม่": "#6f42c1", "สำเร็จ": "var(--success-color)", "ระหว่างขนส่ง": "var(--success-color)",
         "เบิกนวนคร": "var(--info-color)", "เบิกศูนย์อะไหล่": "var(--info-color)", "เบิกวิภาวดี": "#fd7e14",
-        "ขอซื้อขอซ่อม": "#20c997", "Project": "#6c757d", "รอทดแทน": "#ffc107", "แจ้งCodeผิด": "var(--danger-color)"
+        "ขอซื้อขอซ่อม": "#20c997", "SPACIAL": "#6c757d", "รอทดแทน": "#ffc107", "แจ้งCodeผิด": "var(--danger-color)"
     };
     return c[status] || "#6c757d";
 }

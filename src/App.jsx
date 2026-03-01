@@ -6,13 +6,14 @@ import LoginModal from './components/LoginModal';
 import AppHeader from './components/AppHeader';
 import DashboardCards from './components/DashboardCards';
 import AnalyticsCards from './components/AnalyticsCards';
+import GroupCards from './components/GroupCards';
 import ControlPanel from './components/ControlPanel';
 import DataTable from './components/DataTable';
 import { DetailModal, ActionModal, GraphModal, SummaryModal, SpareSummaryModal, OutsideRequestModal, StickerModal } from './components/Modals';
 import { PoDetailsModal, PrDetailsModal, OtherPlantModal, StatusEditModal, ProjectModal, TimelineModal } from './components/TableModals';
 
 import { useAppData } from './hooks/useAppData';
-import { PLANT_MAPPING } from './utils/helpers';
+import { PLANT_MAPPING, exportToCSV } from './utils/helpers';
 import SpareSummaryPage from './components/SpareSummaryPage';
 
 function App() {
@@ -43,6 +44,7 @@ function App() {
     statusCallFilter, setStatusCallFilter,
     searchTerm, setSearchTerm,
     dashboardFilter, setDashboardFilter,
+    gmFilter, setGmFilter,
     applyDashboardFilter,
     refreshData,
     refreshDataBackground,
@@ -65,7 +67,7 @@ function App() {
   const [prModal, setPrModal] = useState({ open: false, row: null });
   const [otherPlantModal, setOtherPlantModal] = useState({ open: false, row: null });
   const [statusEditModal, setStatusEditModal] = useState({ open: false, row: null });
-  const [projectModal, setProjectModal] = useState({ open: false, row: null });
+  const [spacialModal, setSpacialModal] = useState({ open: false, row: null });
   const [timelineModal, setTimelineModal] = useState({ open: false, row: null });
   const [outsideRequestModal, setOutsideRequestModal] = useState({ open: false, row: null });
   const [stickerModal, setStickerModal] = useState({ open: false, row: null });
@@ -114,19 +116,32 @@ function App() {
 
   // Dashboard card click handler
   const handleDashboardClick = (filter) => {
-    // If clicking the same active filter, toggle it off (null = show all)
+    setCurrentPage(1);
+
+    // Case 1: Total Reset
     if (filter === 'total') {
       setDashboardFilter(null);
+      setGmFilter(null);
       // Reset all other filters
       setTeamPlantFilter('');
       setPendingUnitFilter('');
       setStockAnswerFilter('');
       setStatusCallFilter('');
       setSearchTerm('');
-    } else {
-      setDashboardFilter(dashboardFilter === filter ? null : filter);
+      return;
     }
-    setCurrentPage(1);
+
+    // Case 2: GM Hierarchical Filter
+    if (filter.startsWith && filter.startsWith('gm_')) {
+      const gmName = filter.replace('gm_', '');
+      // Toggle logic for GM
+      setGmFilter(prev => prev === gmName ? null : gmName);
+      return;
+    }
+
+    // Case 3: Status/Type Dashboard Filter
+    // Toggle logic for general dashboard filters
+    setDashboardFilter(prev => prev === filter ? null : filter);
   };
 
   // Analytics card handlers
@@ -153,7 +168,7 @@ function App() {
   const handlePrClick = (row) => setPrModal({ open: true, row });
   const handleOtherPlantClick = (row) => setOtherPlantModal({ open: true, row });
   const handleStatusXClick = (row) => setStatusEditModal({ open: true, row });
-  const handleStatusGroupClick = (row) => setProjectModal({ open: true, row });
+  const handleStatusGroupClick = (row) => setSpacialModal({ open: true, row });
   const handleDetailClick = (row) => setTimelineModal({ open: true, row });
   const handleNawaClick = (row) => {
     const userStr = localStorage.getItem('user');
@@ -190,8 +205,8 @@ function App() {
   };
 
   // After project save, refresh data optimistically
-  const handleProjectSaved = (actionType, ticket, statusCall, project) => {
-    console.log(`Project ${actionType}: Ticket=${ticket}, StatusCall=${statusCall}, Project=${project}`);
+  const handleSpacialSaved = (actionType, ticket, statusCall, project) => {
+    console.log(`SPACIAL ${actionType}: Ticket=${ticket}, StatusCall=${statusCall}, Project=${project}`);
     if (actionType === 'delete') {
       // Optimistically restore group ticket status fallback by checking first item
       const targetRow = allData.find(r => String(r["Ticket Number"]).trim() === String(ticket).trim());
@@ -245,11 +260,28 @@ function App() {
             </div>
           ) : (
             <>
+              <GroupCards
+                title="สรุปผลตาม GM"
+                stats={summary.gmStats}
+                onCardClick={handleDashboardClick}
+                activeFilter={gmFilter}
+                prefix="gm_"
+              />
+
               <DashboardCards
                 data={summary}
                 onCardClick={handleDashboardClick}
                 activeCard={dashboardFilter}
               />
+
+              <GroupCards
+                title="สรุปผลตาม Call Type"
+                stats={summary.callTypeStats}
+                onCardClick={handleDashboardClick}
+                activeFilter={dashboardFilter}
+                prefix="calltype_"
+              />
+
               <AnalyticsCards
                 data={summary}
                 onOpenGraph={() => setGraphOpen(true)}
@@ -265,7 +297,10 @@ function App() {
                 onSearchChange={setSearchTerm}
                 onSearch={() => setCurrentPage(1)}
                 onPrintTable={() => window.print()}
-                onExportExcel={() => alert("Export functionality")}
+                onExportCSV={() => {
+                  const timestamp = new Date().toISOString().split('T')[0];
+                  exportToCSV(sortedData, `Call_Export_${timestamp}.csv`);
+                }}
                 onOpenSummary={() => setSummaryOpen(true)}
                 onUpdateGuide={() => { }}
                 onRefresh={refreshData}
@@ -364,10 +399,10 @@ function App() {
             onSaved={handleStatusEditSaved}
           />
           <ProjectModal
-            isOpen={projectModal.open}
-            onClose={() => setProjectModal({ open: false, row: null })}
-            row={projectModal.row}
-            onSaved={handleProjectSaved}
+            isOpen={spacialModal.open}
+            onClose={() => setSpacialModal({ open: false, row: null })}
+            row={spacialModal.row}
+            onSaved={handleSpacialSaved}
           />
           <TimelineModal
             isOpen={timelineModal.open}

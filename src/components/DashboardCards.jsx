@@ -16,7 +16,26 @@ function DashboardCard({ title, value, percent, idBase, gradient = false, onClic
             style={style}
             onClick={() => onClick(idBase)}
         >
-            <h3>{title}</h3>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
+                <h3 style={{ margin: 0 }}>{title}</h3>
+                {isActive && (
+                    <div className="active-badge" style={{
+                        background: '#fff',
+                        color: '#28a745',
+                        borderRadius: '50%',
+                        width: '20px',
+                        height: '20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                        flexShrink: 0,
+                        marginLeft: '8px'
+                    }}>
+                        <i className="fas fa-check" style={{ fontSize: '11px', fontWeight: 'bold' }}></i>
+                    </div>
+                )}
+            </div>
             <div className="value" id={`${idBase}Value`}>{value}</div>
             <div className="progress-container">
                 <div id={`${idBase}Progress`} className="progress-bar" style={progressStyle}></div>
@@ -40,8 +59,8 @@ export default function DashboardCards({ data = {}, onCardClick, activeCard }) {
         successPercent: data.successPercent || '0%',
         nawaVipa: data.nawaVipa || 0,
         nawaVipaPercent: data.nawaVipaPercent || '0%',
-        project: data.project || 0,
-        projectPercent: data.projectPercent || '0%',
+        spacial: data.spacial || 0,
+        spacialPercent: data.spacialPercent || '0%',
         request: data.request || 0,
         requestPercent: data.requestPercent || '0%',
         newPart: data.newPart || 0,
@@ -60,13 +79,27 @@ export default function DashboardCards({ data = {}, onCardClick, activeCard }) {
             {summary.exceedLeadtime > 0 && (
                 <DashboardCard title="Call (เกิน Leadtime)" value={summary.exceedLeadtime} percent={summary.exceedLeadtimePercent} idBase="exceedLeadtime" onClick={onCardClick} isActive={isActive('exceedLeadtime')} />
             )}
-            <DashboardCard title="Call ค้าง (รอของเข้า)" value={summary.pending} percent={summary.pendingPercent} idBase="pending" onClick={onCardClick} isActive={isActive('pending')} />
-            <DashboardCard title="Call (ดึงจากคลังอื่น)" value={summary.otherPlant} percent={summary.otherPlantPercent} idBase="otherPlant" onClick={onCardClick} isActive={isActive('otherPlant')} />
-            <DashboardCard title="Call (ระหว่างขนส่ง)" value={summary.success} percent={summary.successPercent} idBase="success" onClick={onCardClick} isActive={isActive('success')} />
-            <DashboardCard title="Call (เบิกศูนย์อะไหล่)" value={summary.nawaVipa} percent={summary.nawaVipaPercent} idBase="nawaVipa" onClick={onCardClick} isActive={isActive('nawaVipa')} />
-            <DashboardCard title="Call (Spacial)" value={summary.project} percent={summary.projectPercent} idBase="project" gradient={true} onClick={onCardClick} isActive={isActive('project')} />
-            <DashboardCard title="Call (ขอซื้อขอซ่อม)" value={summary.request} percent={summary.requestPercent} idBase="request" onClick={onCardClick} isActive={isActive('request')} />
-            <DashboardCard title="Call (เปิดรหัสใหม่)" value={summary.newPart} percent={summary.newPartPercent} idBase="newPart" onClick={onCardClick} isActive={isActive('newPart')} />
+            {summary.pending > 0 && (
+                <DashboardCard title="Call ค้าง (รอของเข้า)" value={summary.pending} percent={summary.pendingPercent} idBase="pending" onClick={onCardClick} isActive={isActive('pending')} />
+            )}
+            {summary.otherPlant > 0 && (
+                <DashboardCard title="Call (ดึงจากคลังอื่น)" value={summary.otherPlant} percent={summary.otherPlantPercent} idBase="otherPlant" onClick={onCardClick} isActive={isActive('otherPlant')} />
+            )}
+            {summary.success > 0 && (
+                <DashboardCard title="Call (ระหว่างขนส่ง)" value={summary.success} percent={summary.successPercent} idBase="success" onClick={onCardClick} isActive={isActive('success')} />
+            )}
+            {summary.nawaVipa > 0 && (
+                <DashboardCard title="Call (เบิกศูนย์อะไหล่)" value={summary.nawaVipa} percent={summary.nawaVipaPercent} idBase="nawaVipa" onClick={onCardClick} isActive={isActive('nawaVipa')} />
+            )}
+            {summary.spacial > 0 && (
+                <DashboardCard title="Call (SPACIAL)" value={summary.spacial} percent={summary.spacialPercent} idBase="spacial" gradient={true} onClick={onCardClick} isActive={isActive('spacial')} />
+            )}
+            {summary.request > 0 && (
+                <DashboardCard title="Call (ขอซื้อขอซ่อม)" value={summary.request} percent={summary.requestPercent} idBase="request" onClick={onCardClick} isActive={isActive('request')} />
+            )}
+            {summary.newPart > 0 && (
+                <DashboardCard title="Call (เปิดรหัสใหม่)" value={summary.newPart} percent={summary.newPartPercent} idBase="newPart" onClick={onCardClick} isActive={isActive('newPart')} />
+            )}
         </div>
     );
 }
