@@ -9,23 +9,7 @@ function GroupCard({ label, value, percent, id, onClick, isActive, typeClass }) 
         >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', width: '100%', marginBottom: '4px' }}>
                 <h3 style={{ fontSize: '0.9em', margin: 0 }}>{label}</h3>
-                {isActive && (
-                    <div className="active-badge" style={{
-                        background: '#fff',
-                        color: '#28a745',
-                        borderRadius: '50%',
-                        width: '18px',
-                        height: '18px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                        flexShrink: 0,
-                        marginLeft: '4px'
-                    }}>
-                        <i className="fas fa-check" style={{ fontSize: '10px', fontWeight: 'bold' }}></i>
-                    </div>
-                )}
+                {isActive && <i className="fas fa-check-circle" style={{ fontSize: '0.8em', color: '#fff' }}></i>}
             </div>
             <div className="value" style={{ fontSize: '1.5em' }}>{value}</div>
             <div className="progress-container" style={{ height: '4px', backgroundColor: 'rgba(255,255,255,0.2)' }}>

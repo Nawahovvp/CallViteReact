@@ -16,25 +16,9 @@ function DashboardCard({ title, value, percent, idBase, gradient = false, onClic
             style={style}
             onClick={() => onClick(idBase)}
         >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
-                <h3 style={{ margin: 0 }}>{title}</h3>
-                {isActive && (
-                    <div className="active-badge" style={{
-                        background: '#fff',
-                        color: '#28a745',
-                        borderRadius: '50%',
-                        width: '20px',
-                        height: '20px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                        flexShrink: 0,
-                        marginLeft: '8px'
-                    }}>
-                        <i className="fas fa-check" style={{ fontSize: '11px', fontWeight: 'bold' }}></i>
-                    </div>
-                )}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <h3>{title}</h3>
+                {isActive && <i className="fas fa-check-circle" style={{ fontSize: '0.9em', color: '#fff' }}></i>}
             </div>
             <div className="value" id={`${idBase}Value`}>{value}</div>
             <div className="progress-container">
