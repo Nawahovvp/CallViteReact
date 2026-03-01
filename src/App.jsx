@@ -260,13 +260,15 @@ function App() {
             </div>
           ) : (
             <>
-              <GroupCards
-                title="สรุปผลตาม GM"
-                stats={summary.gmStats}
-                onCardClick={handleDashboardClick}
-                activeFilter={gmFilter}
-                prefix="gm_"
-              />
+              {currentUser?.Status === 'Admin' && (
+                <GroupCards
+                  title="สรุปผลตาม GM"
+                  stats={summary.gmStats}
+                  onCardClick={handleDashboardClick}
+                  activeFilter={gmFilter}
+                  prefix="gm_"
+                />
+              )}
 
               <DashboardCards
                 data={summary}
