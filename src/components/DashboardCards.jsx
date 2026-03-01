@@ -18,7 +18,20 @@ function DashboardCard({ title, value, percent, idBase, gradient = false, onClic
         >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <h3>{title}</h3>
-                {isActive && <i className="fas fa-check-circle" style={{ fontSize: '0.9em', color: '#fff' }}></i>}
+                {isActive && (
+                    <div style={{
+                        background: '#fff',
+                        borderRadius: '50%',
+                        width: '20px',
+                        height: '20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+                    }}>
+                        <i className="fas fa-check-circle" style={{ fontSize: '18px', color: '#e74c3c' }}></i>
+                    </div>
+                )}
             </div>
             <div className="value" id={`${idBase}Value`}>{value}</div>
             <div className="progress-container">

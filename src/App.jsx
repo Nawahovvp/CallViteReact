@@ -9,7 +9,7 @@ import AnalyticsCards from './components/AnalyticsCards';
 import GroupCards from './components/GroupCards';
 import ControlPanel from './components/ControlPanel';
 import DataTable from './components/DataTable';
-import { DetailModal, ActionModal, GraphModal, SummaryModal, SpareSummaryModal, OutsideRequestModal, StickerModal } from './components/Modals';
+import { DetailModal, ActionModal, GraphModal, SummaryModal, SpareSummaryModal, OutsideRequestModal, StickerModal, printStickers, UpdateGuideModal } from './components/Modals';
 import { PoDetailsModal, PrDetailsModal, OtherPlantModal, StatusEditModal, ProjectModal, TimelineModal } from './components/TableModals';
 
 import { useAppData } from './hooks/useAppData';
@@ -71,6 +71,7 @@ function App() {
   const [timelineModal, setTimelineModal] = useState({ open: false, row: null });
   const [outsideRequestModal, setOutsideRequestModal] = useState({ open: false, row: null });
   const [stickerModal, setStickerModal] = useState({ open: false, row: null });
+  const [updateGuideOpen, setUpdateGuideOpen] = useState(false);
 
   const handleSort = (key) => {
     let direction = 'asc';
@@ -277,34 +278,40 @@ function App() {
               />
 
               <GroupCards
-                title="สรุปผลตาม Call Type"
                 stats={summary.callTypeStats}
                 onCardClick={handleDashboardClick}
                 activeFilter={dashboardFilter}
                 prefix="calltype_"
-              />
-
-              <AnalyticsCards
-                data={summary}
-                onOpenGraph={() => setGraphOpen(true)}
-                onOpenSpareSummary={() => window.open('?page=spare-summary', '_blank')}
-                onOver7Click={handleOver7Click}
-                onWaitingResponseClick={handleWaitingResponseClick}
-                onMaxCardClick={handleMaxCardClick}
-                dashboardFilter={dashboardFilter}
-              />
+              >
+                <AnalyticsCards
+                  data={summary}
+                  onOpenGraph={() => setGraphOpen(true)}
+                  onOpenSpareSummary={() => window.open('?page=spare-summary', '_blank')}
+                  onOver7Click={handleOver7Click}
+                  onWaitingResponseClick={handleWaitingResponseClick}
+                  onMaxCardClick={handleMaxCardClick}
+                  dashboardFilter={dashboardFilter}
+                />
+              </GroupCards>
 
               <ControlPanel
                 searchTerm={searchTerm}
                 onSearchChange={setSearchTerm}
                 onSearch={() => setCurrentPage(1)}
-                onPrintTable={() => window.print()}
+                onPrintTable={() => {
+                  if (selectedRows.length > 0) {
+                    const selectedData = allData.filter(r => selectedRows.includes(r.id));
+                    printStickers(selectedData);
+                  } else {
+                    window.print();
+                  }
+                }}
                 onExportCSV={() => {
                   const timestamp = new Date().toISOString().split('T')[0];
                   exportToCSV(sortedData, `Call_Export_${timestamp}.csv`);
                 }}
                 onOpenSummary={() => setSummaryOpen(true)}
-                onUpdateGuide={() => { }}
+                onUpdateGuide={() => setUpdateGuideOpen(true)}
                 onRefresh={refreshData}
                 lastUpdated={lastUpdated}
                 availableFilters={availableFilters}
@@ -430,6 +437,10 @@ function App() {
             isOpen={stickerModal.open}
             onClose={() => setStickerModal({ open: false, row: null })}
             row={stickerModal.row}
+          />
+          <UpdateGuideModal
+            isOpen={updateGuideOpen}
+            onClose={() => setUpdateGuideOpen(false)}
           />
         </div>
       )}

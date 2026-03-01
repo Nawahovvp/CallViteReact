@@ -1069,111 +1069,118 @@ export function OutsideRequestModal({ isOpen, onClose, row, onSubmit }) {
     );
 }
 
+// ===== Helper for Sticker Printing =====
+export const printStickers = (rows) => {
+    if (!rows || (Array.isArray(rows) && rows.length === 0)) return;
+    const items = Array.isArray(rows) ? rows : [rows];
+
+    const uniqueName = new Date().getTime();
+    const windowFeatures = 'left=0,top=0,width=800,height=900,toolbar=0,scrollbars=0,status=0';
+    const printWindow = window.open('about:blank', uniqueName, windowFeatures);
+
+    const stickerHtml = items.map((row, index) => `
+        <div class="sticker-container" style="${index < items.length - 1 ? 'page-break-after: always;' : ''}">
+            <div class="header">SPARE PART STICKER</div>
+            <div class="ticket-number">${row["Ticket Number"]}</div>
+            <div class="field">
+                <div class="label">Brand:</div>
+                <div class="value">${row["Brand"] || "-"}</div>
+            </div>
+            <div class="field">
+                <div class="label">Team:</div>
+                <div class="value">${row["Team"] || "-"}</div>
+            </div>
+            <div class="field">
+                <div class="label">Material:</div>
+                <div class="value">${row["Material"]}</div>
+            </div>
+            <div class="field" style="flex: 1;">
+                <div class="label">Description:</div>
+                <div class="value">${getDesc(row)}</div>
+            </div>
+            <div class="field" style="border-top: 1px solid #000; padding-top: 2mm;">
+                <div class="label">ศูนย์พื้นที่:</div>
+                <div class="value">${getCleanTeamPlant(row["TeamPlant"])}</div>
+            </div>
+        </div>
+    `).join('');
+
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Sticker Print</title>
+                <style>
+                    @page {
+                        size: 80mm 100mm;
+                        margin: 0;
+                    }
+                    body {
+                        margin: 0;
+                        padding: 5mm;
+                        font-family: 'Prompt', sans-serif;
+                        width: 80mm;
+                        box-sizing: border-box;
+                    }
+                    .sticker-container {
+                        border: 1px solid #000;
+                        height: 90mm; /* Slightly less than 100mm to avoid overflow */
+                        padding: 3mm;
+                        display: flex;
+                        flex-direction: column;
+                        gap: 2mm;
+                        box-sizing: border-box;
+                    }
+                    .header {
+                        text-align: center;
+                        font-weight: bold;
+                        font-size: 14pt;
+                        border-bottom: 2px solid #000;
+                        padding-bottom: 2mm;
+                        margin-bottom: 2mm;
+                    }
+                    .field {
+                        display: flex;
+                        margin-bottom: 1mm;
+                    }
+                    .label {
+                        font-weight: bold;
+                        width: 25mm;
+                        font-size: 10pt;
+                    }
+                    .value {
+                        flex: 1;
+                        font-size: 10pt;
+                        word-break: break-all;
+                    }
+                    .ticket-number {
+                        font-size: 16pt;
+                        font-weight: 800;
+                        text-align: center;
+                        margin: 2mm 0;
+                        padding: 2mm;
+                        background: #eee;
+                    }
+                </style>
+            </head>
+            <body>
+                ${stickerHtml}
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+        printWindow.print();
+        printWindow.close();
+    }, 250);
+};
+
 // ===== Sticker Print Modal (80x100 mm) =====
 export function StickerModal({ isOpen, onClose, row }) {
     if (!isOpen || !row) return null;
 
     const handlePrint = () => {
-        const uniqueName = new Date().getTime();
-        const windowFeatures = 'left=0,top=0,width=800,height=900,toolbar=0,scrollbars=0,status=0';
-        const printWindow = window.open('about:blank', uniqueName, windowFeatures);
-
-        printWindow.document.write(`
-            <html>
-                <head>
-                    <title>Sticker Print - ${row["Ticket Number"]}</title>
-                    <style>
-                        @page {
-                            size: 80mm 100mm;
-                            margin: 0;
-                        }
-                        body {
-                            margin: 0;
-                            padding: 5mm;
-                            font-family: 'Prompt', sans-serif;
-                            width: 80mm;
-                            height: 100mm;
-                            box-sizing: border-box;
-                            display: flex;
-                            flex-direction: column;
-                        }
-                        .sticker-container {
-                            border: 1px solid #000;
-                            height: 100%;
-                            padding: 3mm;
-                            display: flex;
-                            flex-direction: column;
-                            gap: 2mm;
-                        }
-                        .header {
-                            text-align: center;
-                            font-weight: bold;
-                            font-size: 14pt;
-                            border-bottom: 2px solid #000;
-                            padding-bottom: 2mm;
-                            margin-bottom: 2mm;
-                        }
-                        .field {
-                            display: flex;
-                            margin-bottom: 1mm;
-                        }
-                        .label {
-                            font-weight: bold;
-                            width: 30mm;
-                            font-size: 10pt;
-                        }
-                        .value {
-                            flex: 1;
-                            font-size: 10pt;
-                            word-break: break-all;
-                        }
-                        .ticket-number {
-                            font-size: 16pt;
-                            font-weight: 800;
-                            text-align: center;
-                            margin: 2mm 0;
-                            padding: 2mm;
-                            background: #eee;
-                        }
-                        @media print {
-                            button { display: none; }
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="sticker-container">
-                        <div class="header">SPARE PART STICKER</div>
-                        <div class="ticket-number">${row["Ticket Number"]}</div>
-                        <div class="field">
-                            <div class="label">Brand:</div>
-                            <div class="value">${row["Brand"] || "-"}</div>
-                        </div>
-                        <div class="field">
-                            <div class="label">Team:</div>
-                            <div class="value">${row["Team"] || "-"}</div>
-                        </div>
-                        <div class="field">
-                            <div class="label">Material:</div>
-                            <div class="value">${row["Material"]}</div>
-                        </div>
-                        <div class="field" style="flex: 1;">
-                            <div class="label">Description:</div>
-                            <div class="value">${getDesc(row)}</div>
-                        </div>
-                        <div class="field" style="border-top: 1px solid #000; padding-top: 2mm;">
-                            <div class="label">ศูนย์พื้นที่:</div>
-                            <div class="value">${getCleanTeamPlant(row["TeamPlant"])}</div>
-                        </div>
-                    </div>
-                </body>
-            </html>
-        `);
-        printWindow.document.close();
-        printWindow.focus();
-        setTimeout(() => {
-            printWindow.print();
-            printWindow.close();
-        }, 250);
+        printStickers(row);
     };
 
     return (
@@ -1211,6 +1218,74 @@ export function StickerModal({ isOpen, onClose, row }) {
                     <button className="action-button logout-button" style={{ flex: 1 }} onClick={onClose}>
                         <i className="fas fa-times"></i> ปิด
                     </button>
+                </div>
+            </div>
+        </div>
+    );
+}
+// ===== Update Guide Modal =====
+export function UpdateGuideModal({ isOpen, onClose }) {
+    if (!isOpen) return null;
+
+    const steps = [
+        "ดึงข้อมูล Call ค้างทั้งหมด (หัวข้อที่ 3: รายการงานสำหรับติดตาม Call ค้าง และ OverP)",
+        "ไม่ต้องใส่อะไร แล้วกดปุ่ม \"ค้นหา\"",
+        "หน้า Call แสดงข้อมูลทั้งหมด กดปุ่ม \"Excel\" เพื่อดาวน์โหลด",
+        "กลับมาที่หน้าคลังสินค้า Dashboard Call แล้วกดปุ่ม \"Data\"",
+        "เปิดไฟล์ปลายทาง แล้ว Import ข้อมูลจาก Excel ที่ดาวน์โหลด",
+        "เลือก Import > Upload > เลือกไฟล์ Excel > แทนที่สเปรดชีต > ตกลง",
+        "รอระบบรีเฟรชประมาณ 15 วินาที จากนั้นปิดไฟล์ เป็นอันเสร็จ"
+    ];
+
+    return (
+        <div className="modal" onClick={(e) => e.target.className === 'modal' && onClose()}>
+            <div className="modal-content premium-modal-content" style={{ maxWidth: '550px' }}>
+                <div className="premium-modal-header">
+                    <h3><i className="fas fa-info-circle" style={{ marginRight: 10 }}></i> วิธีอัพข้อมูล</h3>
+                    <span className="premium-modal-close" onClick={onClose}>&times;</span>
+                </div>
+                <div className="premium-modal-body" style={{ padding: '20px' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+                        {steps.map((step, index) => (
+                            <div key={index} style={{ display: 'flex', gap: '15px', alignItems: 'flex-start' }}>
+                                <div style={{
+                                    minWidth: '28px',
+                                    height: '28px',
+                                    background: 'var(--info-color)',
+                                    color: '#fff',
+                                    borderRadius: '50%',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontWeight: 'bold',
+                                    fontSize: '14px',
+                                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                                }}>
+                                    {index + 1}
+                                </div>
+                                <div style={{ fontSize: '15px', color: '#2c3e50', lineHeight: '1.4', paddingTop: '4px' }}>
+                                    {step}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div style={{ marginTop: '30px', textAlign: 'center' }}>
+                        <button
+                            className="action-button"
+                            style={{
+                                padding: '12px 40px',
+                                fontSize: '16px',
+                                fontWeight: 'bold',
+                                background: 'linear-gradient(135deg, #28a745, #218838)',
+                                boxShadow: '0 4px 15px rgba(40, 167, 69, 0.3)',
+                                border: 'none'
+                            }}
+                            onClick={onClose}
+                        >
+                            เข้าใจไหม
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>

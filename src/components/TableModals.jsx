@@ -516,11 +516,20 @@ function parseTimeline(timeline) {
     events.forEach(event => {
         let eventTrim = event.trim();
         if (!eventTrim) return;
-        let date = ''; let person = ''; let status = ''; let details = ''; let pendingUnit = '-'; let duration = '';
 
         // 1. Extract Date
         const dateMatch = eventTrim.match(/^(\d{2}\.\d{2})\s/);
+
+        // If NO date match, merge with previous row if possible
+        if (!dateMatch && rows.length > 0) {
+            const lastIdx = rows.length - 1;
+            rows[lastIdx].details = (rows[lastIdx].details ? rows[lastIdx].details + ' ' : '') + eventTrim;
+            return; // Skip new row creation
+        }
+
+        let date = ''; let person = ''; let status = ''; let details = ''; let pendingUnit = '-'; let duration = '';
         let currentDateObj = null;
+
         if (dateMatch) {
             date = dateMatch[1];
             eventTrim = eventTrim.slice(dateMatch[0].length);
@@ -624,59 +633,137 @@ export function TimelineModal({ isOpen, onClose, row }) {
 
     return (
         <div className="modal" style={{ zIndex: 1100 }}>
-            <div className="modal-content" style={{ maxWidth: '900px' }}>
-                <span className="close" onClick={onClose}>&times;</span>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 20px', marginBottom: 20 }}>
-                    <div><span className="label">ผ่านมา:</span> <span className="value">{row["DayRepair"] || "-"}</span></div>
-                    <div><span className="label">วันที่แจ้ง:</span> <span className="value">{extractDate(row["DateTime"] || "-")}</span></div>
-                    <div><span className="label">Ticket Number:</span> <span className="value">{row["Ticket Number"] || "-"}</span></div>
-                    <div><span className="label">Brand:</span> <span className="value">{row["Brand"] || "-"}</span></div>
-                    <div><span className="label">Call Type:</span> <span className="value">{row["Call Type"] || "-"}</span></div>
-                    <div><span className="label">Team:</span> <span className="value">{row["Team"] || "-"}</span></div>
-                    <div><span className="label">ศูนย์พื้นที่:</span> <span className="value">{getCleanTeamPlant(row["TeamPlant"]) || "-"}</span></div>
-                    <div><span className="label">ค้างหน่วยงาน:</span> <span className="value">{row["ค้างหน่วยงาน"] || "-"}</span></div>
-                    <div><span className="label">Material:</span> <span className="value">{row["Material"] || "-"}</span></div>
-                    <div><span className="label">Description:</span> <span className="value">{getDesc(row) || "-"}</span></div>
-                    <div><span className="label">นวนคร:</span> <span className="value">{row["Nawa"] || "-"}</span></div>
-                    <div><span className="label">วิภาวดี:</span> <span className="value">{row["Vipa"] || "-"}</span></div>
-                    <div><span className="label">คลังพื้นที่:</span> <span className="value">{row["QtyPlant"] || "-"}</span></div>
-                    <div><span className="label">คลังตอบ:</span> <span className="value">{row["คลังตอบ"] || "-"}</span></div>
-                    <div><span className="label">สถานะ Call:</span> <span className="value">{row["StatusCall"] || "-"}</span></div>
-                    <div><span className="label">วันที่ตอบ:</span> <span className="value">{row["วันที่ตอบ"] || "-"}</span></div>
-                    <div><span className="label">ผู้แจ้ง:</span> <span className="value">{row["UserAns"] || "-"}</span></div>
-                    <div><span className="label">แจ้งผล:</span> <span className="value">{row["Answer1"] || "-"}</span></div>
+            <div className="premium-modal-content" style={{ maxWidth: '1100px' }}>
+                <div className="premium-modal-header">
+                    <h3><i className="fas fa-history" style={{ marginRight: 10 }}></i> รายละเอียดและประวัติ Timeline</h3>
+                    <span className="premium-modal-close" onClick={onClose}>&times;</span>
                 </div>
 
-                <h3>ประวัติ Timeline</h3>
-                <div style={{ overflowX: 'auto' }}>
-                    <table className="timeline-table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
-                        <thead>
-                            <tr style={{ textAlign: 'center' }}>
-                                <th style={{ width: 50 }}>วันที่</th>
-                                <th>ค้างหน่วยงาน</th>
-                                <th>ผู้แจ้ง</th>
-                                <th style={{ width: 50, maxWidth: 50, overflow: 'hidden', padding: 1 }}>ใช้เวลาดำเนินการแจ้ง</th>
-                                <th>แจ้งค้าง</th>
-                                <th style={{ width: '60%' }}>รายละเอียด</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                <div className="premium-modal-body">
+                    {/* Quick Info Grid */}
+                    <div className="quick-info-grid">
+                        <div className="info-card highlight">
+                            <span className="info-card-label">Ticket Information</span>
+                            <div className="info-card-value" style={{ fontSize: '18px', color: 'var(--info-color)' }}>{row["Ticket Number"] || "-"}</div>
+                            <div style={{ fontSize: '13px', marginTop: '5px' }}>
+                                <span style={{ color: 'var(--text-secondary)' }}>วันที่แจ้ง:</span> {extractDate(row["DateTime"] || "-")}
+                            </div>
+                        </div>
+
+                        <div className="info-card">
+                            <span className="info-card-label">Parts & Asset</span>
+                            <div className="info-card-value">{row["Material"] || "-"}</div>
+                            <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '2px' }}>{getDesc(row) || "-"}</div>
+                        </div>
+
+                        <div className="info-card warning">
+                            <span className="info-card-label">Location & Team</span>
+                            <div className="info-card-value">{getCleanTeamPlant(row["TeamPlant"]) || "-"}</div>
+                            <div style={{ fontSize: '13px', marginTop: '5px' }}>
+                                <span style={{ color: 'var(--text-secondary)' }}>Team:</span> {row["Team"] || "-"}
+                            </div>
+                        </div>
+
+                        <div className="info-card success">
+                            <span className="info-card-label">Current Status</span>
+                            <div className="info-card-value" style={{ color: 'var(--success-color)' }}>{row["StatusCall"] || "-"}</div>
+                            <div style={{ fontSize: '13px', marginTop: '5px' }}>
+                                <span style={{ color: 'var(--text-secondary)' }}>ค้างหน่วยงาน:</span> {row["ค้างหน่วยงาน"] || "-"}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px', marginBottom: '25px', background: 'rgba(255,255,255,0.5)', padding: '15px', borderRadius: '12px', border: '1px dashed var(--border-color)' }}>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>ผ่านมา</div>
+                            <div style={{ fontSize: '16px', fontWeight: 'bold' }}>{row["DayRepair"] || "-"} วัน</div>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Brand</div>
+                            <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{row["Brand"] || "-"}</div>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Call Type</div>
+                            <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{row["Call Type"] || "-"}</div>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>นวนคร</div>
+                            <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{row["Nawa"] || "-"}</div>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>วิภาวดี</div>
+                            <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{row["Vipa"] || "-"}</div>
+                        </div>
+                        <div style={{ textAlign: 'center' }}>
+                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>คลังพื้นที่</div>
+                            <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{row["QtyPlant"] || "-"}</div>
+                        </div>
+                    </div>
+
+                    <h4 style={{ marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-primary)' }}>
+                        <i className="fas fa-stream"></i> ประวัติ Timeline
+                    </h4>
+
+                    <div style={{ maxHeight: '500px', overflowY: 'auto', paddingRight: '10px' }}>
+                        <ul className="timeline-vertical">
                             {timelineRows.length === 0 ? (
-                                <tr><td colSpan="6" style={{ textAlign: 'center' }}>ไม่มีข้อมูล Timeline</td></tr>
+                                <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)', background: 'var(--card-bg)', borderRadius: '12px' }}>
+                                    <i className="fas fa-ghost" style={{ fontSize: '30px', marginBottom: '10px', opacity: 0.3 }}></i>
+                                    <div>ไม่มีข้อมูล Timeline</div>
+                                </div>
                             ) : (
                                 timelineRows.map((tr, i) => (
-                                    <tr key={i}>
-                                        <td>{tr.date || '-'}</td>
-                                        <td style={{ color: '#28a745' }}>{tr.displayPendingUnit}</td>
-                                        <td>{tr.person || '-'}</td>
-                                        <td style={{ textAlign: 'center', fontWeight: 'bold', color: '#0d6efd' }}>{tr.duration}</td>
-                                        <td style={{ color: '#dc3545' }}>{tr.pendingUnit}</td>
-                                        <td><span style={{ fontWeight: 'bold' }}>{tr.status || '-'}</span><br />{tr.details || ''}</td>
-                                    </tr>
+                                    <li key={i} className="timeline-v-item">
+                                        <div className="timeline-v-dot"></div>
+                                        <div className="timeline-v-card">
+                                            <div className="timeline-v-header">
+                                                <div className="timeline-v-date">
+                                                    <i className="far fa-calendar-alt"></i> วันที่ {tr.date || '-'}
+                                                </div>
+                                                {tr.duration && (
+                                                    <div className="timeline-v-duration">
+                                                        ใช้เวลา {tr.duration} วัน
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="timeline-v-meta">
+                                                <div className="timeline-v-meta-item">
+                                                    <span className="timeline-v-label">ผู้แจ้ง:</span>
+                                                    <span className="timeline-v-value">{tr.person || '-'}</span>
+                                                </div>
+                                                <div className="timeline-v-meta-item">
+                                                    <span className="timeline-v-label">ค้างหน่วยงาน:</span>
+                                                    <span className="timeline-v-value badge-pending">{tr.displayPendingUnit}</span>
+                                                </div>
+                                                <div className="timeline-v-meta-item">
+                                                    <span className="timeline-v-label">แจ้งค้าง:</span>
+                                                    <span className="timeline-v-value badge-unit">{tr.pendingUnit}</span>
+                                                </div>
+                                            </div>
+
+                                            <div className="timeline-v-status">
+                                                {tr.status || '-'}
+                                            </div>
+
+                                            {tr.details && (
+                                                <div className="timeline-v-details">
+                                                    {tr.details}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </li>
                                 ))
                             )}
-                        </tbody>
-                    </table>
+                        </ul>
+                    </div>
+                </div>
+
+                <div style={{ padding: '15px 25px', background: '#fff', borderTop: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                        <i className="fas fa-user-edit"></i> ผู้แจ้งผลล่าสุด: <strong>{row["UserAns"] || "-"}</strong> | แจ้งเมื่อ: <strong>{row["วันที่ตอบ"] || "-"}</strong>
+                    </div>
+                    <button className="action-button" onClick={onClose} style={{ padding: '8px 25px' }}>ปิดหน้าต่าง</button>
                 </div>
             </div>
         </div>

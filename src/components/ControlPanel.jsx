@@ -18,7 +18,37 @@ const STATUS_COLORS = {
     "แจ้งCodeผิด": "#e83e8c"
 };
 
-function FilterButton({ label, count, isActive, onClick, textColor }) {
+function FilterButton({ label, count, isActive, onClick, textColor, isCard, isMini, variant }) {
+    if (isCard) {
+        return (
+            <div
+                className={`filter-card ${isActive ? 'active' : ''} ${isMini ? 'mini' : ''} ${variant ? `${variant}-variant` : ''}`}
+                onClick={onClick}
+                style={!isActive && textColor ? { borderColor: textColor } : {}}
+            >
+                <div className="filter-card-label">{label}</div>
+                {!isMini && <div className="filter-card-count">{count !== undefined ? count : 0}</div>}
+                {isActive && (
+                    <div style={{
+                        position: 'absolute',
+                        top: '-6px',
+                        right: '-6px',
+                        background: '#fff',
+                        borderRadius: '50%',
+                        width: '18px',
+                        height: '18px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                        zIndex: 2
+                    }}>
+                        <i className="fas fa-check-circle" style={{ fontSize: '16px', color: '#e74c3c' }}></i>
+                    </div>
+                )}
+            </div>
+        );
+    }
     return (
         <button
             className={`modern-filter-btn ${isActive ? 'active' : ''}`}
@@ -31,50 +61,61 @@ function FilterButton({ label, count, isActive, onClick, textColor }) {
     );
 }
 
-function FilterRow({ label, id, options, activeValue, onSelect, useStatusColors, isAreaCenter }) {
+function FilterRow({ label, id, options, activeValue, onSelect, useStatusColors, isAreaCenter, isCard, isSectioned, isMini }) {
     // Sort by count descending
     const sorted = Object.entries(options || {}).sort((a, b) => b[1] - a[1]);
 
-    if (isAreaCenter) {
+    if (isSectioned) {
         const nonSA = sorted.filter(([key]) => !key.startsWith('SA'));
         const sa = sorted.filter(([key]) => key.startsWith('SA'));
 
         return (
-            <div className="filter-row area-center-row">
-                <label className="modern-label" style={{ minWidth: '100px' }}>{label}</label>
-                <div className="filter-groups-container" style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
-                    {/* Line 1: Normal buttons + All button */}
-                    <div className="filter-group" style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                        <FilterButton
-                            label="ทั้งหมด"
-                            isActive={!activeValue}
-                            onClick={() => onSelect('')}
-                        />
-                        {nonSA.map(([key, count]) => (
-                            <FilterButton
-                                key={key}
-                                label={key}
-                                count={count}
-                                isActive={activeValue === key}
-                                onClick={() => onSelect(activeValue === key ? '' : key)}
-                                textColor={useStatusColors ? STATUS_COLORS[key] : undefined}
-                            />
-                        ))}
-                    </div>
-                    {/* Line 2: SA buttons */}
-                    <div className="filter-group" style={{ display: 'flex', flexWrap: 'wrap', gap: '5px' }}>
-                        {sa.map(([key, count]) => (
-                            <FilterButton
-                                key={key}
-                                label={key}
-                                count={count}
-                                isActive={activeValue === key}
-                                onClick={() => onSelect(activeValue === key ? '' : key)}
-                                textColor={useStatusColors ? STATUS_COLORS[key] : undefined}
-                            />
-                        ))}
-                    </div>
-                </div>
+            <div className="filter-section">
+                {/* Line 1: Normal buttons */}
+                {(nonSA.length > 0) && (
+                    <>
+                        <div className="filter-group-header">
+                            <i className={isAreaCenter ? "fas fa-building" : (label === 'คลังตอบ' ? "fas fa-reply-all" : "fas fa-layer-group")}></i>
+                            {isAreaCenter ? " ศูนย์บริการ / คลัง" : (label === 'คลังตอบ' ? " สถานะการตอบ" : " หน่วยงาน")}
+                        </div>
+                        <div className="filter-group-line">
+                            {nonSA.map(([key, count]) => (
+                                <FilterButton
+                                    key={key}
+                                    label={key}
+                                    count={count}
+                                    isActive={activeValue === key}
+                                    onClick={() => onSelect(activeValue === key ? '' : key)}
+                                    textColor={useStatusColors ? STATUS_COLORS[key] : undefined}
+                                    isCard={isCard}
+                                    variant="non-sa"
+                                />
+                            ))}
+                        </div>
+                    </>
+                )}
+                {/* Line 2: SA buttons */}
+                {(sa.length > 0) && (
+                    <>
+                        <div className="filter-group-header">
+                            <i className="fas fa-user-tie"></i> Service Advisor (SA)
+                        </div>
+                        <div className="filter-group-line">
+                            {sa.map(([key, count]) => (
+                                <FilterButton
+                                    key={key}
+                                    label={key}
+                                    count={count}
+                                    isActive={activeValue === key}
+                                    onClick={() => onSelect(activeValue === key ? '' : key)}
+                                    textColor={useStatusColors ? STATUS_COLORS[key] : undefined}
+                                    isCard={isCard}
+                                    variant="sa"
+                                />
+                            ))}
+                        </div>
+                    </>
+                )}
             </div>
         );
     }
@@ -87,6 +128,7 @@ function FilterRow({ label, id, options, activeValue, onSelect, useStatusColors,
                     label="ทั้งหมด"
                     isActive={!activeValue}
                     onClick={() => onSelect('')}
+                    isCard={isCard}
                 />
                 {sorted.map(([key, count]) => (
                     <FilterButton
@@ -96,6 +138,7 @@ function FilterRow({ label, id, options, activeValue, onSelect, useStatusColors,
                         isActive={activeValue === key}
                         onClick={() => onSelect(activeValue === key ? '' : key)}
                         textColor={useStatusColors ? STATUS_COLORS[key] : undefined}
+                        isCard={isCard}
                     />
                 ))}
             </div>
@@ -133,6 +176,8 @@ export default function ControlPanel({
                 options={availableFilters?.teamPlant}
                 activeValue={teamPlantFilter}
                 onSelect={onTeamPlantChange}
+                isCard={true}
+                isSectioned={true}
                 isAreaCenter={true}
             />
             <FilterRow
@@ -141,6 +186,8 @@ export default function ControlPanel({
                 options={availableFilters?.pendingUnit}
                 activeValue={pendingUnitFilter}
                 onSelect={onPendingUnitChange}
+                isCard={true}
+                isSectioned={true}
             />
             <FilterRow
                 label="คลังตอบ"
@@ -149,15 +196,10 @@ export default function ControlPanel({
                 activeValue={stockAnswerFilter}
                 onSelect={onStockAnswerChange}
                 useStatusColors={true}
+                isCard={true}
+                isSectioned={true}
             />
-            <FilterRow
-                label="Status"
-                id="statusCallFilter"
-                options={availableFilters?.statusCall}
-                activeValue={statusCallFilter}
-                onSelect={onStatusCallChange}
-                useStatusColors={true}
-            />
+
 
             <div className="search-row">
                 <input

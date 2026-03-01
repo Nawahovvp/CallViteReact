@@ -19,7 +19,7 @@ export default function AnalyticsCards({
     };
 
     return (
-        <div className="dashboard" style={{ marginTop: '12px' }}>
+        <>
             <div
                 id="over7Card"
                 className={`dashboard-card over7-card ${dashboardFilter === 'over7' ? 'active' : ''}`}
@@ -72,6 +72,6 @@ export default function AnalyticsCards({
                 <h3><i className="fas fa-list-alt"></i> สรุปอะไหล่</h3>
                 <div className="value"><i className="fas fa-list-alt"></i></div>
             </div>
-        </div>
+        </>
     );
 }
