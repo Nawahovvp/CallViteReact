@@ -238,55 +238,60 @@ export function OtherPlantModal({ isOpen, onClose, material, description, plantS
 
     return (
         <div className="modal" style={{ zIndex: 1100 }}>
-            <div className="premium-modal-content" style={{ maxWidth: '600px' }}>
+            <div className="premium-modal-content" style={{ maxWidth: '700px' }}>
                 <div className="premium-modal-header">
                     <h3><i className="fas fa-warehouse" style={{ marginRight: 10 }}></i> รายละเอียดพื้นที่อื่น</h3>
                     <span className="premium-modal-close" onClick={onClose}>&times;</span>
                 </div>
                 <div className="premium-modal-body">
-                    <div className="modal-info-bar">
-                        <div className="modal-info-item">
-                            <span className="modal-info-label">Material:</span>
-                            <span className="modal-info-value">{material}</span>
+                    {/* Header Info Cards */}
+                    <div className="quick-info-grid">
+                        <div className="info-card highlight">
+                            <span className="info-card-label">Material</span>
+                            <div className="info-card-value" style={{ fontSize: '16px', color: 'var(--info-color)' }}>{material}</div>
                         </div>
-                        <div className="modal-info-item">
-                            <span className="modal-info-label">Description:</span>
-                            <span className="modal-info-value">{description}</span>
+                        <div className="info-card">
+                            <span className="info-card-label">Description</span>
+                            <div className="info-card-value" style={{ fontSize: '13px', lineHeight: '1.4' }}>{description}</div>
                         </div>
                     </div>
 
                     {plantDetails.length === 0 ? (
-                        <div style={{ textAlign: 'center', padding: '40px 0', color: '#888' }}>
-                            <i className="fas fa-store-slash" style={{ fontSize: 48, display: 'block', marginBottom: 10, opacity: 0.3 }}></i>
-                            ไม่พบรายละเอียดพื้นที่อื่นสำหรับ Material นี้
+                        <div style={{ textAlign: 'center', padding: '60px 0', color: 'var(--text-secondary)' }}>
+                            <i className="fas fa-store-slash" style={{ fontSize: 48, display: 'block', marginBottom: 15, opacity: 0.2 }}></i>
+                            <div>ไม่พบรายละเอียดพื้นที่อื่นสำหรับ Material นี้</div>
                         </div>
                     ) : (
-                        <div className="compact-table-wrapper">
-                            <table className="compact-table">
-                                <thead>
-                                    <tr>
-                                        <th>คลังสินค้า (Plant)</th>
-                                        <th style={{ textAlign: 'center', width: '120px' }}>จำนวนคงเหลือ</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {plantDetails.map((item, i) => (
-                                        <tr key={i}>
-                                            <td style={{ fontWeight: '500' }}>{item.displayName}</td>
-                                            <td style={{ textAlign: 'center', fontWeight: 'bold', color: item.qty > 0 ? 'var(--success-color)' : '#999' }}>
+                        <>
+                            <div className="warehouse-grid">
+                                {plantDetails.map((item, i) => {
+                                    const isSa = item.displayName.startsWith('SA ');
+                                    return (
+                                        <div key={i} className={`warehouse-card ${isSa ? 'sa-type' : ''}`}>
+                                            <div className="warehouse-info">
+                                                <div className="warehouse-icon">
+                                                    <i className={isSa ? "fas fa-user-tie" : "fas fa-boxes"}></i>
+                                                </div>
+                                                <div className="warehouse-name">{item.displayName}</div>
+                                            </div>
+                                            <div className={`warehouse-qty ${item.qty === 0 ? 'zero' : ''}`}>
                                                 {item.qty.toLocaleString()}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    <tr style={{ background: 'rgba(0,0,0,0.02)', fontWeight: 'bold' }}>
-                                        <td style={{ textAlign: 'right', padding: '12px 15px' }}>รวมทั้งหมด</td>
-                                        <td style={{ textAlign: 'center', padding: '12px 15px', color: '#20c997', fontSize: '15px' }}>
-                                            {total.toLocaleString()}
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+
+                            <div className="total-summary-card">
+                                <div className="total-summary-label">
+                                    <i className="fas fa-calculator"></i>
+                                    <span>จำนวนรวมทั้งหมด</span>
+                                </div>
+                                <div className="total-summary-value">
+                                    {total.toLocaleString()} ชิ้น
+                                </div>
+                            </div>
+                        </>
                     )}
                 </div>
             </div>

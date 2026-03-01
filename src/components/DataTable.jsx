@@ -172,7 +172,7 @@ export default function DataTable({
                                         </td>
                                         {/* PendingStockDays */}
                                         <td data-column="PendingStockDays" style={{ fontWeight: 'bold', color: 'var(--danger-color)', textAlign: 'center' }}>
-                                            {row['PendingStockDays'] === "0" || !row['PendingStockDays'] ? "" : row['PendingStockDays']}
+                                            {(!row['PendingStockDays'] || row['PendingStockDays'] === "0" || row['PendingStockDays'] === "-") ? "0" : row['PendingStockDays']}
                                         </td>
                                         {/* StockStartDate */}
                                         <td data-column="StockStartDate">{row['StockStartDate'] === "-" || !row['StockStartDate'] ? "" : row['StockStartDate']}</td>
