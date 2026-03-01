@@ -55,10 +55,10 @@ export default function AnalyticsCards({
                 style={{ cursor: 'pointer' }}
             >
                 <h3>Call ค้างสูงสุด</h3>
-                <div className="value" style={{ fontSize: '1.4em', paddingBottom: '5px' }}>
+                <div className="value" style={{ fontSize: '1.2em', paddingBottom: '3px' }}>
                     {summary.maxPendingUnit}
                 </div>
-                <div className="progress-text" style={{ fontSize: '1em', color: 'rgba(255,255,255,0.9)' }}>
+                <div className="progress-text" style={{ fontSize: '0.85em', color: 'rgba(255,255,255,0.9)' }}>
                     {summary.maxPendingCount} Call
                 </div>
             </div>

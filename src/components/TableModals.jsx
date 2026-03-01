@@ -644,8 +644,8 @@ export function TimelineModal({ isOpen, onClose, row }) {
                     <div className="quick-info-grid">
                         <div className="info-card highlight">
                             <span className="info-card-label">Ticket Information</span>
-                            <div className="info-card-value" style={{ fontSize: '18px', color: 'var(--info-color)' }}>{row["Ticket Number"] || "-"}</div>
-                            <div style={{ fontSize: '13px', marginTop: '5px' }}>
+                            <div className="info-card-value" style={{ fontSize: '16px', color: 'var(--info-color)' }}>{row["Ticket Number"] || "-"}</div>
+                            <div style={{ fontSize: '12px', marginTop: '4px' }}>
                                 <span style={{ color: 'var(--text-secondary)' }}>วันที่แจ้ง:</span> {extractDate(row["DateTime"] || "-")}
                             </div>
                         </div>
@@ -666,37 +666,37 @@ export function TimelineModal({ isOpen, onClose, row }) {
 
                         <div className="info-card success">
                             <span className="info-card-label">Current Status</span>
-                            <div className="info-card-value" style={{ color: 'var(--success-color)' }}>{row["StatusCall"] || "-"}</div>
-                            <div style={{ fontSize: '13px', marginTop: '5px' }}>
+                            <div className="info-card-value" style={{ fontSize: '15px', color: 'var(--success-color)' }}>{row["StatusCall"] || "-"}</div>
+                            <div style={{ fontSize: '12px', marginTop: '4px' }}>
                                 <span style={{ color: 'var(--text-secondary)' }}>ค้างหน่วยงาน:</span> {row["ค้างหน่วยงาน"] || "-"}
                             </div>
                         </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '10px', marginBottom: '25px', background: 'rgba(255,255,255,0.5)', padding: '15px', borderRadius: '12px', border: '1px dashed var(--border-color)' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '8px', marginBottom: '20px', background: 'rgba(255,255,255,0.5)', padding: '10px', borderRadius: '12px', border: '1px dashed var(--border-color)' }}>
                         <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>ผ่านมา</div>
-                            <div style={{ fontSize: '16px', fontWeight: 'bold' }}>{row["DayRepair"] || "-"} วัน</div>
+                            <div style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>ผ่านมา</div>
+                            <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{row["DayRepair"] || "-"} วัน</div>
                         </div>
                         <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Brand</div>
-                            <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{row["Brand"] || "-"}</div>
+                            <div style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Brand</div>
+                            <div style={{ fontSize: '13px', fontWeight: 'bold' }}>{row["Brand"] || "-"}</div>
                         </div>
                         <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Call Type</div>
-                            <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{row["Call Type"] || "-"}</div>
+                            <div style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>Call Type</div>
+                            <div style={{ fontSize: '13px', fontWeight: 'bold' }}>{row["Call Type"] || "-"}</div>
                         </div>
                         <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>นวนคร</div>
-                            <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{row["Nawa"] || "-"}</div>
+                            <div style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>นวนคร</div>
+                            <div style={{ fontSize: '13px', fontWeight: 'bold' }}>{row["Nawa"] || "-"}</div>
                         </div>
                         <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>วิภาวดี</div>
-                            <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{row["Vipa"] || "-"}</div>
+                            <div style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>วิภาวดี</div>
+                            <div style={{ fontSize: '13px', fontWeight: 'bold' }}>{row["Vipa"] || "-"}</div>
                         </div>
                         <div style={{ textAlign: 'center' }}>
-                            <div style={{ fontSize: '11px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>คลังพื้นที่</div>
-                            <div style={{ fontSize: '14px', fontWeight: 'bold' }}>{row["QtyPlant"] || "-"}</div>
+                            <div style={{ fontSize: '10px', color: 'var(--text-secondary)', fontWeight: 'bold' }}>คลังพื้นที่</div>
+                            <div style={{ fontSize: '13px', fontWeight: 'bold' }}>{row["QtyPlant"] || "-"}</div>
                         </div>
                     </div>
 

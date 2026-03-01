@@ -251,12 +251,9 @@ function App() {
 
           {isLoading ? (
             <div id="loading" className="loading show">
-              <div className="spinner-container">
-                <div className="cute-spinner">
-                  <i className="fas fa-cog fa-spin"></i>
-                  <i className="fas fa-tools"></i>
-                </div>
-                <p>กำลังโหลดข้อมูล...</p>
+              <div className="premium-loader-wrapper">
+                <div className="master-loader"></div>
+                <div className="loader-text-premium">กำลังโหลดข้อมูล...</div>
               </div>
             </div>
           ) : (

@@ -64,7 +64,14 @@ export default function DataTable({
                     </thead>
                     <tbody>
                         {isLoading ? (
-                            <tr><td colSpan={COLUMNS.length + 2} style={{ textAlign: 'center' }}>กำลังโหลดข้อมูล...</td></tr>
+                            <tr key="loading">
+                                <td colSpan={COLUMNS.length + 2} style={{ textAlign: 'center', padding: '60px 0' }}>
+                                    <div className="premium-loader-wrapper">
+                                        <div className="master-loader"></div>
+                                        <div className="loader-text-premium">กำลังโหลดข้อมูล...</div>
+                                    </div>
+                                </td>
+                            </tr>
                         ) : dataWithGroup.length === 0 ? (
                             <tr><td colSpan={COLUMNS.length + 2} style={{ textAlign: 'center' }}>ไม่พบข้อมูล</td></tr>
                         ) : (
