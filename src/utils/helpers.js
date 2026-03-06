@@ -92,16 +92,19 @@ export const TABLE_COLUMNS = [
     { key: 'GM', label: 'GM' },
     { key: 'Division', label: 'ฝ่าย' },
     { key: 'Department', label: 'แผนก' },
+    { key: 'IDPlant', label: 'IDPlant' },
 ];
 
 // Data computations
 function computeRequestQuantities(data) {
     const result = {};
-    if (!Array.isArray(data)) return result;
+    const byPlant = {}; // key: "plantCode_material" -> qty
+    if (!Array.isArray(data)) return { byMaterial: result, byPlant };
     data.forEach(row => {
         const status = (row?.status ?? row?.Status ?? row?.STATUS ?? row?.สถานะ ?? row?.["status"] ?? row?.["Status"] ?? "").toString().trim();
         if (status && status !== "รอเบิก") return; // "รอเบิก" was REQUEST_STATUS_TARGET
         const material = normalizeMaterial(row?.Material ?? row?.material ?? row?.MaterialCode ?? row?.Mat ?? row?.Item ?? "");
+        const plant = (row?.plant ?? row?.Plant ?? "").toString().trim();
 
         let qtyRaw = row?.qty ?? row?.Qty ?? row?.QTY ?? row?.Quantity ?? row?.quantity ?? row?.["จำนวน"] ?? row?.["จำนวนที่ขอเบิก"] ?? 0;
         let qty = 0;
@@ -112,6 +115,10 @@ function computeRequestQuantities(data) {
         }
         if (material && !isNaN(qty) && qty > 0) {
             result[material] = (result[material] || 0) + qty;
+            if (plant) {
+                const plantKey = `${plant}_${material}`;
+                byPlant[plantKey] = (byPlant[plantKey] || 0) + qty;
+            }
         }
     });
 
@@ -128,7 +135,7 @@ function computeRequestQuantities(data) {
         }
     } catch (e) { console.warn("Cache parse err", e); }
 
-    return result;
+    return { byMaterial: result, byPlant };
 }
 
 function computePrQuantities(data) {
@@ -266,7 +273,7 @@ export function processRawData(
     teamPlantData
 ) {
     // 1. Precalculate dictionaries
-    const reqQ = computeRequestQuantities(requestData);
+    const { byMaterial: reqQ, byPlant: reqByPlant } = computeRequestQuantities(requestData);
     const prQ = computePrQuantities(prData);
     const poQ = computePoQuantities(poData);
     const vipaStock = computeStockQuantities(vipaData);
@@ -347,7 +354,16 @@ export function processRawData(
 
         r["PO"] = poQ[mat] !== undefined ? poQ[mat] : "-";
         r["PR"] = prQ[mat] !== undefined ? prQ[mat] : "";
-        r["Request"] = reqQty !== undefined ? reqQty : "";
+
+        // Request (นอกรอบ): Only show when IDPlant matches the plant from request data
+        const rowIdPlant = PLANT_MAPPING[(r["ค้างหน่วยงาน"] || "").toString().trim()] || "";
+        if (rowIdPlant && mat) {
+            const plantReqKey = `${rowIdPlant}_${mat}`;
+            const plantReqQty = reqByPlant[plantReqKey];
+            r["Request"] = (plantReqQty !== undefined && plantReqQty > 0) ? plantReqQty : "";
+        } else {
+            r["Request"] = reqQty !== undefined ? reqQty : "";
+        }
 
         // Plant Stock attachment
         let teamPlant = r["ศูนย์พื้นที่"] || r["TeamPlant"];
@@ -356,6 +372,10 @@ export function processRawData(
             const tp = teamPlant.toString().trim();
             plantCode = PLANT_MAPPING[tp] || PLANT_MAPPING[`Stock ${tp}`] || PLANT_MAPPING[tp.replace(/^Stock\s+/i, '')];
         }
+
+        // Store IDPlant for display (lookup from ค้างหน่วยงาน which has "Stock xxx" values matching PLANT_MAPPING)
+        const pendingUnit = (r["ค้างหน่วยงาน"] || "").toString().trim();
+        r["IDPlant"] = PLANT_MAPPING[pendingUnit] || "";
 
         if (plantCode) {
             const pKey = `${plantCode}_${mat}`;

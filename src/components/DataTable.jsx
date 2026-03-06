@@ -196,6 +196,7 @@ export default function DataTable({
                                         <td data-column="GM">{row['GM']}</td>
                                         <td data-column="Division">{row['Division']}</td>
                                         <td data-column="Department">{row['Department']}</td>
+                                        <td data-column="IDPlant">{row['IDPlant']}</td>
                                         {/* Detail */}
                                         <td data-column="detail">
                                             <button className="detail-button" onClick={() => onDetailClick?.(row)}>ดูรายละเอียด</button>
