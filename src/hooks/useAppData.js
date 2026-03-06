@@ -311,7 +311,7 @@ export function useAppData() {
         refreshDataBackground: () => fetchData(false),
         updateRowLocally,
         handleOutsideRequest: async (payload) => {
-            const { material, quantity } = payload;
+            const { material, quantity, plant } = payload;
             const localKey = normalizeMaterial(material);
             const localQty = parseFloat(quantity);
 
@@ -319,7 +319,7 @@ export function useAppData() {
                 throw new Error("Invalid material or quantity");
             }
 
-            // 1. Optimistic Update Local Cache (requestQuantities)
+            // 1. Optimistic Update Local Cache (requestQuantities by material)
             let currentCache = {};
             try {
                 const cachedPropsText = localStorage.getItem('app_cached_requestQuantities');
@@ -332,6 +332,22 @@ export function useAppData() {
             const previousQty = currentCache[localKey] || 0;
             currentCache[localKey] = previousQty + localQty;
             localStorage.setItem('app_cached_requestQuantities', JSON.stringify(currentCache));
+
+            // 1b. Optimistic Update Local Cache (requestQuantities by plant+material)
+            if (plant) {
+                let plantCache = {};
+                try {
+                    const plantCacheText = localStorage.getItem('app_cached_requestByPlant');
+                    if (plantCacheText) {
+                        plantCache = JSON.parse(plantCacheText);
+                    }
+                } catch (e) {
+                    console.error("Error reading plant cache", e);
+                }
+                const plantKey = `${plant}_${localKey}`;
+                plantCache[plantKey] = (plantCache[plantKey] || 0) + localQty;
+                localStorage.setItem('app_cached_requestByPlant', JSON.stringify(plantCache));
+            }
 
             // Force refresh of the processed data to reflect the new Request quantity
             // A lightweight way is to re-run the processor on the existing state, but fetchData(false) is safer

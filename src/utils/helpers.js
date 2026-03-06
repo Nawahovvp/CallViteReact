@@ -122,7 +122,7 @@ function computeRequestQuantities(data) {
         }
     });
 
-    // Merge Optimistic Cache
+    // Merge Optimistic Cache (byMaterial)
     try {
         const cachedStr = localStorage.getItem('app_cached_requestQuantities');
         if (cachedStr) {
@@ -134,6 +134,19 @@ function computeRequestQuantities(data) {
             });
         }
     } catch (e) { console.warn("Cache parse err", e); }
+
+    // Merge Optimistic Cache (byPlant)
+    try {
+        const plantCacheStr = localStorage.getItem('app_cached_requestByPlant');
+        if (plantCacheStr) {
+            const plantCached = JSON.parse(plantCacheStr);
+            Object.keys(plantCached).forEach(key => {
+                if (plantCached[key] > 0) {
+                    byPlant[key] = (byPlant[key] || 0) + plantCached[key];
+                }
+            });
+        }
+    } catch (e) { console.warn("Plant cache parse err", e); }
 
     return { byMaterial: result, byPlant };
 }
