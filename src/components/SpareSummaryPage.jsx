@@ -75,9 +75,12 @@ export default function SpareSummaryPage({ data = [], rawSources = {}, isLoading
         const prMap = {};
         if (prRawData.length > 0) {
             prRawData.forEach(r => {
-                const matKey = nm(r["Material"] || "");
-                const qty = parseFloat(String(r["Order Quantity"] || r["Quantity"] || "0").replace(/,/g, ''));
-                if (matKey && !isNaN(qty) && qty > 0) {
+                const matKey = normalizeMaterial(r["Material"] || "");
+                if (!matKey) return;
+                const req = parseFloat((r["Quantity requested"] || "0").toString().replace(/,/g, '')) || 0;
+                const ord = parseFloat((r["Quantity ordered"] || "0").toString().replace(/,/g, '')) || 0;
+                const qty = req - ord;
+                if (qty > 0) {
                     prMap[matKey] = (prMap[matKey] || 0) + qty;
                 }
             });
@@ -182,15 +185,110 @@ export default function SpareSummaryPage({ data = [], rawSources = {}, isLoading
 
     if (isLoading && (!data || data.length === 0)) {
         return (
-            <div className="spare-page-container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', flexDirection: 'column' }}>
-                <div className="spinner" style={{ width: '80px', height: '80px', border: '8px solid rgba(0,0,0,0.1)', borderTopColor: 'var(--info-color)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-                <p style={{ marginTop: '20px', fontSize: '18px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>กำลังเตรียมข้อมูลสรุปอะไหล่...</p>
+            <div className="spare-page-container" style={{
+                display: 'flex', justifyContent: 'center', alignItems: 'center',
+                height: '100vh', flexDirection: 'column', background: 'var(--bg-color)',
+                overflow: 'hidden', position: 'relative'
+            }}>
                 <style>{`
-                    @keyframes spin { to { transform: rotate(360deg); } }
+                    @keyframes sp-cw   { to { transform: rotate(360deg); } }
+                    @keyframes sp-ccw  { to { transform: rotate(-360deg); } }
+                    @keyframes sp-pulse {
+                        0%,100% { box-shadow: 0 0 0 0 rgba(0,123,255,0.5); transform: scale(1); }
+                        50%     { box-shadow: 0 0 28px 10px rgba(0,123,255,0.12); transform: scale(1.07); }
+                    }
+                    @keyframes sp-bounce {
+                        0%,80%,100% { transform: translateY(0); opacity: 0.35; }
+                        40%         { transform: translateY(-10px); opacity: 1; }
+                    }
+                    @keyframes sp-shimmer {
+                        0%   { transform: translateX(-100%); }
+                        100% { transform: translateX(400%); }
+                    }
+                    @keyframes sp-float {
+                        0%   { transform: translateY(0) translateX(0); opacity: 0; }
+                        10%  { opacity: 0.55; }
+                        90%  { opacity: 0.55; }
+                        100% { transform: translateY(-90px) translateX(15px); opacity: 0; }
+                    }
+                    @keyframes sp-fadein {
+                        from { opacity: 0; transform: translateY(18px); }
+                        to   { opacity: 1; transform: translateY(0); }
+                    }
                 `}</style>
+
+                {[...Array(9)].map((_, i) => (
+                    <div key={i} style={{
+                        position: 'absolute', borderRadius: '50%', pointerEvents: 'none',
+                        width: `${7 + (i % 4) * 4}px`, height: `${7 + (i % 4) * 4}px`,
+                        background: i % 3 === 0 ? 'rgba(0,123,255,0.22)' : i % 3 === 1 ? 'rgba(253,126,20,0.18)' : 'rgba(25,135,84,0.18)',
+                        left: `${8 + i * 10}%`, bottom: `${12 + (i % 4) * 7}%`,
+                        animation: `sp-float ${2.8 + i * 0.35}s ease-in-out ${i * 0.28}s infinite`
+                    }} />
+                ))}
+
+                <div style={{ position: 'relative', width: 160, height: 160, marginBottom: 38 }}>
+                    <div style={{
+                        position: 'absolute', inset: 0, borderRadius: '50%',
+                        border: '3.5px solid transparent',
+                        borderTopColor: '#007bff', borderRightColor: 'rgba(0,123,255,0.25)',
+                        animation: 'sp-cw 1.4s linear infinite'
+                    }} />
+                    <div style={{
+                        position: 'absolute', inset: 18, borderRadius: '50%',
+                        border: '3.5px solid transparent',
+                        borderTopColor: '#fd7e14', borderLeftColor: 'rgba(253,126,20,0.25)',
+                        animation: 'sp-ccw 1.0s linear infinite'
+                    }} />
+                    <div style={{
+                        position: 'absolute', inset: 36, borderRadius: '50%',
+                        border: '3.5px solid transparent',
+                        borderTopColor: '#198754', borderRightColor: 'rgba(25,135,84,0.25)',
+                        animation: 'sp-cw 0.7s linear infinite'
+                    }} />
+                    <div style={{
+                        position: 'absolute', inset: 53, borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #007bff 0%, #0056b3 100%)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        animation: 'sp-pulse 2s ease-in-out infinite'
+                    }}>
+                        <i className="fas fa-boxes-stacked" style={{ fontSize: 22, color: '#fff' }} />
+                    </div>
+                </div>
+
+                <div style={{ textAlign: 'center', animation: 'sp-fadein 0.7s ease both' }}>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6, letterSpacing: '-0.4px' }}>
+                        กำลังเตรียมข้อมูลอะไหล่
+                    </div>
+                    <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 26 }}>
+                        รวบรวม PR · PO · Stock นวนคร · แต่ละสาขา
+                    </div>
+                    <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 28 }}>
+                        {['#007bff', '#fd7e14', '#198754'].map((c, i) => (
+                            <span key={i} style={{
+                                display: 'inline-block', width: 10, height: 10,
+                                borderRadius: '50%', background: c,
+                                animation: `sp-bounce 1.2s ease-in-out ${i * 0.2}s infinite`
+                            }} />
+                        ))}
+                    </div>
+                    <div style={{
+                        width: 280, height: 4, borderRadius: 999,
+                        background: 'var(--border-color)', overflow: 'hidden',
+                        position: 'relative', margin: '0 auto'
+                    }}>
+                        <div style={{
+                            position: 'absolute', top: 0, left: 0, height: '100%', width: '40%',
+                            borderRadius: 999,
+                            background: 'linear-gradient(90deg, transparent, #007bff, transparent)',
+                            animation: 'sp-shimmer 1.6s ease-in-out infinite'
+                        }} />
+                    </div>
+                </div>
             </div>
         );
     }
+
 
     if (!computedData) {
         return (

@@ -533,9 +533,12 @@ export function SpareSummaryModal({ isOpen, onClose, data = [], rawSources = {},
         const prMap = {};
         if (prRawData.length > 0) {
             prRawData.forEach(r => {
-                const matKey = nm(r["Material"] || "");
-                const qty = parseFloat(String(r["Order Quantity"] || r["Quantity"] || "0").replace(/,/g, ''));
-                if (matKey && !isNaN(qty) && qty > 0) {
+                const matKey = normalizeMaterial(r["Material"] || "");
+                if (!matKey) return;
+                const req = parseFloat((r["Quantity requested"] || "0").toString().replace(/,/g, '')) || 0;
+                const ord = parseFloat((r["Quantity ordered"] || "0").toString().replace(/,/g, '')) || 0;
+                const qty = req - ord;
+                if (qty > 0) {
                     prMap[matKey] = (prMap[matKey] || 0) + qty;
                 }
             });
