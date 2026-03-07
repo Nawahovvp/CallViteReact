@@ -84,6 +84,10 @@ export function useAppData() {
             );
             setProcessedData(processed);
             setRawSources({ nawaRawData: nawaData, poRawData: poData, prRawData: prData, plantStockData: plantStockData });
+
+            // Clear optimistic caches after successful fetch — sheet data is now source of truth
+            localStorage.removeItem('app_cached_requestQuantities');
+            localStorage.removeItem('app_cached_requestByPlant');
         } catch (err) {
             console.error(err);
             setError('เกิดข้อผิดพลาดในการโหลดข้อมูล');
