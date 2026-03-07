@@ -7,7 +7,8 @@ export default function AnalyticsCards({
     onOver7Click,
     onWaitingResponseClick,
     onMaxCardClick,
-    dashboardFilter
+    dashboardFilter,
+    isAdmin = false
 }) {
     const summary = {
         over7: data.over7 || 0,
@@ -73,10 +74,12 @@ export default function AnalyticsCards({
                 <div className="value"><i className="fas fa-list-alt"></i></div>
             </div>
 
-            <div id="gmSummaryCard" className="dashboard-card" style={{ cursor: 'pointer', background: 'linear-gradient(135deg, #1e3c72, #2a5298)' }} onClick={() => onMaxCardClick?.('gmSummary')}>
-                <h3><i className="fas fa-chart-pie"></i> สรุป GM (Executive)</h3>
-                <div className="value"><i className="fas fa-user-tie"></i></div>
-            </div>
+            {isAdmin && (
+                <div id="gmSummaryCard" className="dashboard-card" style={{ cursor: 'pointer', background: 'linear-gradient(135deg, #1e3c72, #2a5298)' }} onClick={() => onMaxCardClick?.('gmSummary')}>
+                    <h3><i className="fas fa-chart-pie"></i> สรุป GM (Executive)</h3>
+                    <div className="value"><i className="fas fa-user-tie"></i></div>
+                </div>
+            )}
         </>
     );
 }

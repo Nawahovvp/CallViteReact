@@ -160,6 +160,7 @@ function App() {
 
   const handleMaxCardClick = (type) => {
     if (type === 'gmSummary') {
+      if (currentUser?.Status !== 'Admin') return; // Admin only
       setGmSummaryOpen(true);
       return;
     }
@@ -241,7 +242,7 @@ function App() {
     );
   }
 
-  if (currentPagePath === 'gm-summary' || gmSummaryOpen) {
+  if ((currentPagePath === 'gm-summary' || gmSummaryOpen) && currentUser?.Status === 'Admin') {
     return (
       <GMSummaryPage
         data={allData}
@@ -433,6 +434,7 @@ function App() {
                   onWaitingResponseClick={handleWaitingResponseClick}
                   onMaxCardClick={handleMaxCardClick}
                   dashboardFilter={dashboardFilter}
+                  isAdmin={currentUser?.Status === 'Admin'}
                 />
               </GroupCards>
 
