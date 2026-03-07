@@ -464,15 +464,21 @@ export function SpareSummaryModal({ isOpen, onClose, data = [], rawSources = {},
     const [prgFilter, setPrgFilter] = useState('');
     const [supplierFilter, setSupplierFilter] = useState('');
 
+    const handlePrgChange = (val) => {
+        setPrgFilter(val);
+        setSupplierFilter(''); // reset supplier when PRG changes
+    };
+
     const computedData = useMemo(() => {
         if (!data || data.length === 0) return null;
         const { nawaRawData = [], poRawData = [], prRawData = [] } = rawSources;
 
-        // Filter: exclude ระหว่างขนส่ง, only rows with material
+        // Filter: exclude by StatusX (row-level), only rows with material
+        const EXCLUDE_STATUS = new Set(["ระหว่างขนส่ง", "เบิกนวนคร", "ขอซื้อขอซ่อม"]);
         const filteredRows = data.filter(row => {
-            const sc = (row["StatusCall"] || "").trim();
+            const sx = (row["StatusX"] || row["StatusCall"] || "").trim();
             const mat = (row["Material"] || "").trim();
-            return sc !== "ระหว่างขนส่ง" && mat !== "";
+            return !EXCLUDE_STATUS.has(sx) && mat !== "";
         });
         if (filteredRows.length === 0) return null;
 
@@ -609,22 +615,33 @@ export function SpareSummaryModal({ isOpen, onClose, data = [], rawSources = {},
             });
         }
 
-        // Collect filter options
         const prgOptions = new Set();
         Object.values(prgMap).forEach(v => { if (v && v !== "-") prgOptions.add(v); });
-
-        const supplierOptions = new Set();
-        Object.values(poDetailMap).forEach(v => {
-            if (v.supplier && v.supplier !== "-") supplierOptions.add(v.supplier);
-        });
 
         return {
             filteredRows, sortedMaterials, pivotData, pendingUnits,
             totalQuantity, topMaterial, prgMap, prMap, poMap, poDetailMap, nawaMap,
-            prgOptions: [...prgOptions].sort(),
-            supplierOptions: [...supplierOptions].sort()
+            prgOptions: [...prgOptions].sort()
         };
     }, [data, rawSources]);
+
+    // Supplier options filtered by current PRG selection
+    const supplierOptions = useMemo(() => {
+        if (!computedData) return [];
+        const { sortedMaterials, prgMap, poDetailMap, nawaMap, pivotData } = computedData;
+        const opts = new Set();
+        sortedMaterials.forEach(matDesc => {
+            const [material] = matDesc.split('|');
+            const nawaVal = nawaMap[material] || 0;
+            if (pivotData[matDesc].total <= nawaVal && nawaVal > 0) return;
+            if (prgFilter && prgMap[material] !== prgFilter) return;
+            const detail = poDetailMap[material];
+            if (detail && detail.supplier && detail.supplier !== '-') {
+                opts.add(detail.supplier);
+            }
+        });
+        return [...opts].sort();
+    }, [computedData, prgFilter]);
 
     // Apply PRG + Supplier filter to rows
     const displayRows = useMemo(() => {
@@ -777,7 +794,7 @@ export function SpareSummaryModal({ isOpen, onClose, data = [], rawSources = {},
         </div>
     );
 
-    const { pivotData, pendingUnits, totalQuantity, topMaterial, prgMap, prMap, poMap, poDetailMap, nawaMap, prgOptions, supplierOptions } = computedData;
+    const { pivotData, pendingUnits, totalQuantity, topMaterial, prgMap, prMap, poMap, poDetailMap, nawaMap, prgOptions } = computedData;
 
     const exportCSV = () => {
         const rows = [['Material', 'Description', 'PRG', 'PR', 'PO', 'กำหนดส่ง', 'PO Document', 'Supplier', 'จำนวนส่ง', 'นวนคร', 'รวม', ...pendingUnits]];

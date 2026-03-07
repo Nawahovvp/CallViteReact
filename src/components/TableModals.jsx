@@ -655,6 +655,26 @@ export function TimelineModal({ isOpen, onClose, row }) {
                             </div>
                         </div>
 
+                        {/* Equipment card — ถัดจาก Ticket */}
+                        <div className="info-card" style={{ borderLeft: '4px solid #6f42c1' }}>
+                            <span className="info-card-label" style={{ color: '#6f42c1' }}>
+                                <i className="fas fa-tools" style={{ marginRight: 5 }}></i>Equipment
+                            </span>
+                            <div className="info-card-value" style={{ fontSize: '14px', color: '#6f42c1', fontWeight: 700 }}>
+                                {row["Equipment"] || "-"}
+                            </div>
+                        </div>
+
+                        {/* Company card — ถัดจาก Equipment */}
+                        <div className="info-card" style={{ borderLeft: '4px solid #fd7e14' }}>
+                            <span className="info-card-label" style={{ color: '#fd7e14' }}>
+                                <i className="fas fa-building" style={{ marginRight: 5 }}></i>Company
+                            </span>
+                            <div className="info-card-value" style={{ fontSize: '14px', color: '#fd7e14', fontWeight: 700 }}>
+                                {row["Company"] || "-"}
+                            </div>
+                        </div>
+
                         <div className="info-card">
                             <span className="info-card-label">Parts & Asset</span>
                             <div className="info-card-value">{row["Material"] || "-"}</div>
