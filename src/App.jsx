@@ -266,12 +266,141 @@ function App() {
           <AppHeader user={currentUser} onLogout={() => setIsLoggedIn(false)} lastUpdated={lastUpdated} />
 
           {isLoading ? (
-            <div id="loading" className="loading show">
-              <div className="premium-loader-wrapper">
-                <div className="master-loader"></div>
-                <div className="loader-text-premium">กำลังโหลดข้อมูล...</div>
+            <div style={{
+              position: 'fixed', inset: 0, zIndex: 9999,
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              background: 'var(--bg-color)', overflow: 'hidden'
+            }}>
+              <style>{`
+                @keyframes app-cw    { to { transform: rotate(360deg); } }
+                @keyframes app-ccw   { to { transform: rotate(-360deg); } }
+                @keyframes app-pulse {
+                  0%,100% { box-shadow: 0 0 0 0 rgba(0,123,255,0.45); transform: scale(1); }
+                  50%     { box-shadow: 0 0 36px 14px rgba(0,123,255,0.1); transform: scale(1.08); }
+                }
+                @keyframes app-bounce {
+                  0%,80%,100% { transform: translateY(0); opacity: 0.3; }
+                  40%         { transform: translateY(-12px); opacity: 1; }
+                }
+                @keyframes app-shimmer {
+                  0%   { transform: translateX(-100%); }
+                  100% { transform: translateX(400%); }
+                }
+                @keyframes app-float {
+                  0%   { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
+                  10%  { opacity: 0.55; }
+                  90%  { opacity: 0.55; }
+                  100% { transform: translateY(-110px) translateX(18px) scale(1.1); opacity: 0; }
+                }
+                @keyframes app-fadein {
+                  from { opacity: 0; transform: translateY(22px); }
+                  to   { opacity: 1; transform: translateY(0); }
+                }
+                @keyframes app-scan {
+                  0%   { top: -8%; }
+                  100% { top: 108%; }
+                }
+              `}</style>
+
+              {/* Floating ambient particles */}
+              {[...Array(12)].map((_, i) => (
+                <div key={i} style={{
+                  position: 'absolute', borderRadius: '50%', pointerEvents: 'none',
+                  width: `${5 + (i % 5) * 5}px`, height: `${5 + (i % 5) * 5}px`,
+                  background: i % 3 === 0 ? 'rgba(0,123,255,0.2)' : i % 3 === 1 ? 'rgba(253,126,20,0.16)' : 'rgba(25,135,84,0.18)',
+                  left: `${5 + i * 8}%`, bottom: `${8 + (i % 5) * 6}%`,
+                  animation: `app-float ${3 + i * 0.32}s ease-in-out ${i * 0.22}s infinite`
+                }} />
+              ))}
+
+              {/* Outer glow ring (decorative) */}
+              <div style={{
+                position: 'absolute', width: 280, height: 280, borderRadius: '50%',
+                background: 'radial-gradient(circle, rgba(0,123,255,0.06) 0%, transparent 70%)',
+                pointerEvents: 'none'
+              }} />
+
+              {/* Triple-orbit spinner */}
+              <div style={{ position: 'relative', width: 180, height: 180, marginBottom: 44 }}>
+                {/* Orbit 1 — blue, fast cw */}
+                <div style={{
+                  position: 'absolute', inset: 0, borderRadius: '50%',
+                  border: '4px solid transparent',
+                  borderTopColor: '#007bff',
+                  borderRightColor: 'rgba(0,123,255,0.2)',
+                  animation: 'app-cw 1.6s linear infinite'
+                }} />
+                {/* Orbit 2 — orange, medium ccw */}
+                <div style={{
+                  position: 'absolute', inset: 20, borderRadius: '50%',
+                  border: '4px solid transparent',
+                  borderTopColor: '#fd7e14',
+                  borderLeftColor: 'rgba(253,126,20,0.2)',
+                  animation: 'app-ccw 1.1s linear infinite'
+                }} />
+                {/* Orbit 3 — green, fast2 cw */}
+                <div style={{
+                  position: 'absolute', inset: 40, borderRadius: '50%',
+                  border: '3px solid transparent',
+                  borderTopColor: '#198754',
+                  borderRightColor: 'rgba(25,135,84,0.2)',
+                  animation: 'app-cw 0.75s linear infinite'
+                }} />
+                {/* Center badge pulsing */}
+                <div style={{
+                  position: 'absolute', inset: 58, borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #007bff 0%, #0056b3 100%)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  animation: 'app-pulse 2.2s ease-in-out infinite',
+                  boxShadow: '0 8px 24px rgba(0,123,255,0.35)'
+                }}>
+                  <i className="fas fa-truck-fast" style={{ fontSize: 26, color: '#fff' }} />
+                </div>
+              </div>
+
+              {/* Text block */}
+              <div style={{ textAlign: 'center', animation: 'app-fadein 0.8s ease both' }}>
+                <div style={{
+                  fontSize: 26, fontWeight: 900, letterSpacing: '-0.5px',
+                  color: 'var(--text-primary)', marginBottom: 8
+                }}>
+                  กำลังเตรียมระบบ
+                </div>
+                <div style={{ fontSize: 14, color: 'var(--text-secondary)', marginBottom: 32 }}>
+                  ดึงข้อมูล Call · PR · PO · Stock เพื่อแสดงผล
+                </div>
+
+                {/* Bounce dots */}
+                <div style={{ display: 'flex', gap: 10, justifyContent: 'center', marginBottom: 32 }}>
+                  {[
+                    { color: '#007bff', delay: '0s' },
+                    { color: '#fd7e14', delay: '0.18s' },
+                    { color: '#198754', delay: '0.36s' },
+                  ].map(({ color, delay }, i) => (
+                    <span key={i} style={{
+                      display: 'inline-block', width: 12, height: 12,
+                      borderRadius: '50%', background: color,
+                      animation: `app-bounce 1.3s ease-in-out ${delay} infinite`
+                    }} />
+                  ))}
+                </div>
+
+                {/* Shimmer progress bar */}
+                <div style={{
+                  width: 320, height: 5, borderRadius: 999,
+                  background: 'rgba(0,0,0,0.08)', overflow: 'hidden',
+                  position: 'relative', margin: '0 auto'
+                }}>
+                  <div style={{
+                    position: 'absolute', top: 0, left: 0, height: '100%', width: '35%',
+                    borderRadius: 999,
+                    background: 'linear-gradient(90deg, transparent, #007bff 50%, transparent)',
+                    animation: 'app-shimmer 1.7s ease-in-out infinite'
+                  }} />
+                </div>
               </div>
             </div>
+
           ) : (
             <>
               {currentUser?.Status === 'Admin' && (

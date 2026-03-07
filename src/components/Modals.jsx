@@ -657,17 +657,113 @@ export function SpareSummaryModal({ isOpen, onClose, data = [], rawSources = {},
     if (isLoading && (!data || data.length === 0)) {
         return (
             <div className="modal" onClick={(e) => e.target.className === 'modal' && onClose()}>
-                <div className="modal-content" style={{ textAlign: 'center', padding: '100px' }}>
-                    <span className="close" onClick={onClose}>×</span>
-                    <div className="spinner" style={{ margin: '0 auto 20px', width: '60px', height: '60px', border: '6px solid rgba(0,0,0,0.1)', borderTopColor: 'var(--info-color)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
-                    <p style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--text-secondary)' }}>กำลังโหลดข้อมุล...</p>
+                <div className="modal-content" style={{
+                    maxWidth: '95vw', width: '95vw', minHeight: 420,
+                    display: 'flex', flexDirection: 'column', alignItems: 'center',
+                    justifyContent: 'center', overflow: 'hidden', position: 'relative',
+                    background: 'var(--card-bg)'
+                }}>
+                    <span className="close" onClick={onClose} style={{ position: 'absolute', top: 16, right: 20, zIndex: 5 }}>×</span>
                     <style>{`
-                        @keyframes spin { to { transform: rotate(360deg); } }
+                        @keyframes sp-cw   { to { transform: rotate(360deg); } }
+                        @keyframes sp-ccw  { to { transform: rotate(-360deg); } }
+                        @keyframes sp-pulse {
+                            0%,100% { box-shadow: 0 0 0 0 rgba(0,123,255,0.5); transform: scale(1); }
+                            50%     { box-shadow: 0 0 24px 8px rgba(0,123,255,0.12); transform: scale(1.07); }
+                        }
+                        @keyframes sp-bounce {
+                            0%,80%,100% { transform: translateY(0); opacity: 0.35; }
+                            40%         { transform: translateY(-10px); opacity: 1; }
+                        }
+                        @keyframes sp-shimmer {
+                            0%   { transform: translateX(-100%); }
+                            100% { transform: translateX(400%); }
+                        }
+                        @keyframes sp-float {
+                            0%   { transform: translateY(0) translateX(0); opacity: 0; }
+                            10%  { opacity: 0.5; }
+                            90%  { opacity: 0.5; }
+                            100% { transform: translateY(-70px) translateX(12px); opacity: 0; }
+                        }
+                        @keyframes sp-fadein {
+                            from { opacity: 0; transform: translateY(16px); }
+                            to   { opacity: 1; transform: translateY(0); }
+                        }
                     `}</style>
+
+                    {[...Array(7)].map((_, i) => (
+                        <div key={i} style={{
+                            position: 'absolute', borderRadius: '50%', pointerEvents: 'none',
+                            width: `${6 + (i % 4) * 4}px`, height: `${6 + (i % 4) * 4}px`,
+                            background: i % 3 === 0 ? 'rgba(0,123,255,0.2)' : i % 3 === 1 ? 'rgba(253,126,20,0.16)' : 'rgba(25,135,84,0.16)',
+                            left: `${8 + i * 12}%`, bottom: `${8 + (i % 3) * 10}%`,
+                            animation: `sp-float ${2.6 + i * 0.38}s ease-in-out ${i * 0.3}s infinite`
+                        }} />
+                    ))}
+
+                    <div style={{ position: 'relative', width: 140, height: 140, marginBottom: 32 }}>
+                        <div style={{
+                            position: 'absolute', inset: 0, borderRadius: '50%',
+                            border: '3px solid transparent',
+                            borderTopColor: '#007bff', borderRightColor: 'rgba(0,123,255,0.22)',
+                            animation: 'sp-cw 1.4s linear infinite'
+                        }} />
+                        <div style={{
+                            position: 'absolute', inset: 16, borderRadius: '50%',
+                            border: '3px solid transparent',
+                            borderTopColor: '#fd7e14', borderLeftColor: 'rgba(253,126,20,0.22)',
+                            animation: 'sp-ccw 1.0s linear infinite'
+                        }} />
+                        <div style={{
+                            position: 'absolute', inset: 32, borderRadius: '50%',
+                            border: '3px solid transparent',
+                            borderTopColor: '#198754', borderRightColor: 'rgba(25,135,84,0.22)',
+                            animation: 'sp-cw 0.7s linear infinite'
+                        }} />
+                        <div style={{
+                            position: 'absolute', inset: 47, borderRadius: '50%',
+                            background: 'linear-gradient(135deg, #007bff 0%, #0056b3 100%)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            animation: 'sp-pulse 2s ease-in-out infinite'
+                        }}>
+                            <i className="fas fa-boxes-stacked" style={{ fontSize: 20, color: '#fff' }} />
+                        </div>
+                    </div>
+
+                    <div style={{ textAlign: 'center', animation: 'sp-fadein 0.7s ease both' }}>
+                        <div style={{ fontSize: 20, fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6, letterSpacing: '-0.3px' }}>
+                            กำลังเตรียมข้อมูลอะไหล่
+                        </div>
+                        <div style={{ fontSize: 13, color: 'var(--text-secondary)', marginBottom: 24 }}>
+                            รวบรวม PR · PO · Stock นวนคร · แต่ละสาขา
+                        </div>
+                        <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 24 }}>
+                            {['#007bff', '#fd7e14', '#198754'].map((c, i) => (
+                                <span key={i} style={{
+                                    display: 'inline-block', width: 10, height: 10,
+                                    borderRadius: '50%', background: c,
+                                    animation: `sp-bounce 1.2s ease-in-out ${i * 0.2}s infinite`
+                                }} />
+                            ))}
+                        </div>
+                        <div style={{
+                            width: 260, height: 4, borderRadius: 999,
+                            background: 'var(--border-color)', overflow: 'hidden',
+                            position: 'relative', margin: '0 auto'
+                        }}>
+                            <div style={{
+                                position: 'absolute', top: 0, left: 0, height: '100%', width: '40%',
+                                borderRadius: 999,
+                                background: 'linear-gradient(90deg, transparent, #007bff, transparent)',
+                                animation: 'sp-shimmer 1.6s ease-in-out infinite'
+                            }} />
+                        </div>
+                    </div>
                 </div>
             </div>
         );
     }
+
 
     if (!computedData) return (
         <div className="modal" onClick={(e) => e.target.className === 'modal' && onClose()}>
