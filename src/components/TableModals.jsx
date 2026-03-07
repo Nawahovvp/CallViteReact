@@ -19,11 +19,27 @@ export function PoDetailsModal({ isOpen, onClose, material, description, poRawDa
         if (!isOpen || !material) return [];
         const mat = normalizeMaterial(material);
         if (!poRawData || poRawData.length === 0) return [];
-        return poRawData.filter(row => {
-            const rMat = normalizeMaterial(row["Material"] || "");
-            const qty = parseFloat((row["Still to be delivered (qty)"] + "").replace(/,/g, ''));
-            return rMat === mat && !isNaN(qty) && qty > 0;
-        });
+
+        const parseDelivDate = (row) => {
+            const dateStr = row["Document Date"] || row["Date"] || row["Delivery Date"] || row["Deliv.Date"] || "";
+            if (!dateStr) return Infinity;
+            const parts = dateStr.split('/');
+            if (parts.length === 3) {
+                const [d, m, y] = parts.map(Number);
+                const fullYear = y < 100 ? 2000 + y : y;
+                const dt = new Date(fullYear, m - 1, d);
+                return isNaN(dt.getTime()) ? Infinity : dt.getTime();
+            }
+            return Infinity;
+        };
+
+        return poRawData
+            .filter(row => {
+                const rMat = normalizeMaterial(row["Material"] || "");
+                const qty = parseFloat((row["Still to be delivered (qty)"] + "").replace(/,/g, ''));
+                return rMat === mat && !isNaN(qty) && qty > 0;
+            })
+            .sort((a, b) => parseDelivDate(a) - parseDelivDate(b));
     }, [isOpen, material, poRawData]);
 
     const leadtime = useMemo(() => {
