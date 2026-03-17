@@ -100,9 +100,47 @@ function computeRequestQuantities(data) {
     const result = {};
     const byPlant = {}; // key: "plantCode_material" -> qty
     if (!Array.isArray(data)) return { byMaterial: result, byPlant };
+
+    // Threshold: Yesterday at 15:00:00
+    const now = new Date();
+    const threshold = new Date(now);
+    threshold.setDate(now.getDate() - 1);
+    threshold.setHours(15, 0, 0, 0);
+
     data.forEach(row => {
-        const status = (row?.status ?? row?.Status ?? row?.STATUS ?? row?.สถานะ ?? row?.["status"] ?? row?.["Status"] ?? "").toString().trim();
-        if (status && status !== "รอเบิก") return; // "รอเบิก" was REQUEST_STATUS_TARGET
+        // Parse Timestamp (e.g., "16/03/2569 17:49:42" or "3/17/2026 16:46:47")
+        const tsStr = (row?.Timestamp || row?.timestamp || "").toString().trim();
+        if (!tsStr) return;
+
+        let rowDate = null;
+        // Attempt to parse "D/M/Y H:M:S" or "M/D/Y H:M:S" format
+        const match = tsStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})\s+(\d{1,2}):(\d{1,2}):(\d{1,2})$/);
+        if (match) {
+            let [_, p1, p2, originalY, h, min, s] = match.map(Number);
+            let y = originalY;
+            if (y > 2500) y -= 543; // Convert Thai year to AD
+            
+            let d, m;
+            if (p1 > 12) {
+                d = p1; m = p2; // D/M/Y
+            } else if (p2 > 12) {
+                m = p1; d = p2; // M/D/Y
+            } else {
+                // Ambiguous (e.g., 3/10/2026 vs 16/03/2569)
+                if (originalY > 2500) {
+                    d = p1; m = p2; // D/M/Y for Thai
+                } else {
+                    m = p1; d = p2; // M/D/Y for Gregorian (observed in sheet)
+                }
+            }
+            rowDate = new Date(y, m - 1, d, h, min, s);
+        } else {
+            // Fallback to native parsing
+            rowDate = new Date(tsStr);
+        }
+
+        if (!isValidDate(rowDate) || rowDate < threshold) return;
+
         const material = normalizeMaterial(row?.Material ?? row?.material ?? row?.MaterialCode ?? row?.Mat ?? row?.Item ?? "");
         const plant = (row?.plant ?? row?.Plant ?? "").toString().trim();
 
