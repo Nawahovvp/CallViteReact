@@ -45,7 +45,7 @@ export const teamPlantUrl = `https://opensheet.elk.sh/1eqVoLsZxGguEbRCC5rdI4iMVt
 
 // Fetch utils
 export async function fetchWithTimeout(resource, options = {}) {
-    const { timeout = 15000 } = options;
+    const { timeout = 30000 } = options;
     const controller = new AbortController();
     const id = setTimeout(() => controller.abort(), timeout);
     try {
@@ -64,7 +64,7 @@ export async function fetchWithTimeout(resource, options = {}) {
     }
 }
 
-export async function safeJson(response, timeout = 10000) {
+export async function safeJson(response, timeout = 20000) {
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const jsonPromise = response.json();
     const timeoutPromise = new Promise((_, reject) =>

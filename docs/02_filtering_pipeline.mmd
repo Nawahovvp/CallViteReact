@@ -1,0 +1,15 @@
+flowchart LR
+    RAW["Raw Data (Google Sheets API)"]
+    PROC["processRawData() → processedData[]"]
+    BASE["getFilteredData()\n→ baseFilteredData\n(TeamPlant / Pending / Stock / Status / Search / GM)"]
+    DASH["applyDashboardFilter()\n→ filteredData\n(pending / success / over7 / request / otherPlant ...)"]
+    TABLE["DataTable Display"]
+
+    RAW -->|"fetchAllData()"| PROC
+    PROC --> BASE
+    BASE --> DASH
+    DASH --> TABLE
+
+    CROSS["Cross-filter data\nteamPlantFilterData\npendingFilterData\nstockFilterData\nstatusFilterData"]
+    BASE -->|"excludeType variations"| CROSS
+    CROSS -->|"availableFilters (ticket counts)"| FILTERS["Filter Dropdowns in App.jsx"]

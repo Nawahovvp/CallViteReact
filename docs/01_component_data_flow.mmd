@@ -1,0 +1,64 @@
+flowchart TD
+    subgraph Hook["useAppData.js (Custom Hook)"]
+        direction TB
+        FD["fetchAllData()"]
+        PR["processRawData()"]
+        STATE["State: processedData / filters / dashboardFilter / gmFilter"]
+        GFD["getFilteredData(excludeType)"]
+        ADF["applyDashboardFilter()"]
+        SUM["summary (gmStats / callTypeStats)"]
+        AF["availableFilters (teamPlant / pending / stock / status)"]
+        URL["updateRowLocally()"]
+        HOR["handleOutsideRequest()"]
+
+        FD --> PR --> STATE
+        STATE --> GFD --> ADF
+        ADF --> SUM
+        GFD --> AF
+        URL --> STATE
+        HOR --> FD
+    end
+
+    subgraph App["App.jsx"]
+        A_DATA["data / allData / filteredData"]
+        A_MODALS["Modal States"]
+    end
+
+    subgraph DT["DataTable.jsx"]
+        DT_TABLE["Table Rows (grouped by Ticket)"]
+        DT_PAG["Pagination"]
+        DT_SORT["Sort"]
+    end
+
+    subgraph MOD["Modals.jsx"]
+        DETAIL["DetailModal"]
+        GRAPH["GraphModal (Chart.js Stacked Bar)"]
+        SUMMARY["SummaryModal (Pivot TeamPlant x StatusCall)"]
+        SPARE["SpareSummaryModal (Material Pivot + PRG/Supplier)"]
+    end
+
+    subgraph TMOD["TableModals.jsx"]
+        PO_M["PoDetailsModal"]
+        PR_M["PrDetailsModal"]
+        OP_M["OtherPlantModal"]
+        SE_M["StatusEditModal"]
+        PJ_M["ProjectModal"]
+        TL_M["TimelineModal"]
+    end
+
+    Hook -->|"data / filters / handlers"| App
+    App -->|"data / isLoading / sort / page / onClick"| DT
+    App -->|"isOpen / data / rawSources"| MOD
+    App -->|"isOpen / row / rawData"| TMOD
+
+    DT -->|"onStatusGroupClick"| PJ_M
+    DT -->|"onStatusXClick"| SE_M
+    DT -->|"onPoClick"| PO_M
+    DT -->|"onPrClick"| PR_M
+    DT -->|"onOtherPlantClick"| OP_M
+    DT -->|"onTicketClick"| TL_M
+    DT -->|"onDetailClick"| DETAIL
+
+    GRAPH -->|"onFilterPendingUnit"| App
+    SE_M -->|"onSaved → updateRowLocally"| URL
+    PJ_M -->|"onSaved → updateRowLocally"| URL

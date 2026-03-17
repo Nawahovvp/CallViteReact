@@ -1,0 +1,25 @@
+flowchart TD
+    INPUT["data[] + rawSources\n(nawaRawData / poRawData / prRawData)"]
+
+    EXCL["Exclude StatusX:\nระหว่างขนส่ง / เบิกนวนคร / ขอซื้อขอซ่อม"]
+    PIVOT["Pivot: Material|Desc → { total, pendingUnit: count }"]
+
+    PRG["prgMap (Purchasing Group)\n301 = ในประเทศ / 302 = ต่างประเทศ"]
+    PR_M["prMap (PR qty)\nreq - ord > 0"]
+    PO_M["poMap (PO qty)\nStill to be delivered > 0\n+ poDetailMap (closest delivery date)"]
+    NAWA["nawaMap (Unrestricted Stock)"]
+
+    FILTER["displayRows filter:\ntotal > nawa\n+ PRG filter\n+ Supplier filter"]
+
+    TABLE["Spare Summary Table\n(Material / PRG / PR / PO / Nawa / pendingUnits)"]
+
+    INPUT --> EXCL --> PIVOT
+    PIVOT --> PRG
+    PIVOT --> PR_M
+    PIVOT --> PO_M
+    PIVOT --> NAWA
+    PRG --> FILTER
+    PR_M --> FILTER
+    PO_M --> FILTER
+    NAWA --> FILTER
+    FILTER --> TABLE

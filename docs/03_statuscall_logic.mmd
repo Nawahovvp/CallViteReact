@@ -1,0 +1,34 @@
+flowchart TD
+    EDIT["User edits StatusX"]
+    CHECK{"Has Answer1?\n(_isManualProject)"}
+    KEEP["Keep existing StatusCall"]
+    VALID["validRows = exclude แจ้งCodeผิด"]
+
+    S1{"some StatusX = เปิดรหัสใหม่?"}
+    S2{"some = ขอซื้อขอซ่อม?"}
+    S3{"some = รอของเข้า?"}
+    S4{"some = เบิกนวนคร / เบิกวิภาวดี?"}
+    S5{"some = ระหว่างขนส่ง?"}
+    S6{"all = ดึงจากคลังอื่น?"}
+    S7{"some = เกินLeadtime?"}
+
+    RESULT["Apply new StatusCall\nto all rows of same Ticket"]
+
+    EDIT --> CHECK
+    CHECK -->|"Yes"| KEEP
+    CHECK -->|"No"| VALID
+    VALID --> S1
+    S1 -->|"Yes → เปิดรหัสใหม่"| RESULT
+    S1 -->|"No"| S2
+    S2 -->|"Yes → ขอซื้อขอซ่อม"| RESULT
+    S2 -->|"No"| S3
+    S3 -->|"Yes → รอของเข้า"| RESULT
+    S3 -->|"No"| S4
+    S4 -->|"Yes → เบิกศูนย์อะไหล่"| RESULT
+    S4 -->|"No"| S5
+    S5 -->|"Yes → ระหว่างขนส่ง"| RESULT
+    S5 -->|"No"| S6
+    S6 -->|"Yes → ดึงจากคลังอื่น"| RESULT
+    S6 -->|"No"| S7
+    S7 -->|"Yes → เกินLeadtime"| RESULT
+    S7 -->|"No → รอของเข้า (default)"| RESULT
