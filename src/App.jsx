@@ -22,10 +22,26 @@ function App() {
   const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
-    const cachedUser = localStorage.getItem('user');
-    if (cachedUser) {
-      setCurrentUser(JSON.parse(cachedUser));
-      setIsLoggedIn(true);
+    const cachedUserStr = localStorage.getItem('user');
+    if (cachedUserStr) {
+      try {
+        const cachedUser = JSON.parse(cachedUserStr);
+        const loginTime = cachedUser.loginTime || 0;
+        const now = Date.now();
+        const twentyFourHours = 24 * 60 * 60 * 1000;
+
+        if (now - loginTime > twentyFourHours) {
+          // Session expired
+          localStorage.removeItem('user');
+          setIsLoggedIn(false);
+          setCurrentUser(null);
+        } else {
+          setCurrentUser(cachedUser);
+          setIsLoggedIn(true);
+        }
+      } catch (e) {
+        localStorage.removeItem('user');
+      }
     }
   }, []);
 
@@ -256,15 +272,20 @@ function App() {
     <>
       {!isLoggedIn && (
         <LoginModal onLoginSuccess={(user) => {
+          const userWithTime = { ...user, loginTime: Date.now() };
           setIsLoggedIn(true);
-          setCurrentUser(user);
-          localStorage.setItem('user', JSON.stringify(user));
+          setCurrentUser(userWithTime);
+          localStorage.setItem('user', JSON.stringify(userWithTime));
         }} />
       )}
 
       {isLoggedIn && (
         <div id="appContent" className="app-content">
-          <AppHeader user={currentUser} onLogout={() => setIsLoggedIn(false)} lastUpdated={lastUpdated} />
+          <AppHeader user={currentUser} onLogout={() => {
+            localStorage.removeItem('user');
+            setIsLoggedIn(false);
+            setCurrentUser(null);
+          }} lastUpdated={lastUpdated} />
 
           {isLoading ? (
             <div style={{
