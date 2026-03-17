@@ -40,7 +40,7 @@ export const updateUrl = `https://opensheet.elk.sh/${sheetID}/${updateSheetName}
 
 export const newPartLoadUrl = "https://opensheet.elk.sh/1R8X9yVZBzOc1eDPJU0stKLjVSygMusJihtprdOtb6sE/NewPart";
 export const projectLogLoadUrl = "https://opensheet.elk.sh/1R8X9yVZBzOc1eDPJU0stKLjVSygMusJihtprdOtb6sE/ProjectLog";
-export const newPartSaveUrl = "https://script.google.com/macros/s/AKfycbxQa5PmKWZzjx67H4-mw8IslNK0g9y1_XsAAlk5SOZcuJLsEpyA07X5riUyR8diaSA/exec";
+export const newPartSaveUrl = "https://script.google.com/macros/s/AKfycbwRKCZxTrzSiY1CSE54q-GMJYiCiXdrfj_CBXM2yLerGsExJUsH0UrPgiQcSP-btN45/exec";
 export const teamPlantUrl = `https://opensheet.elk.sh/1eqVoLsZxGguEbRCC5rdI4iMVtQ7CK4T3uXRdx8zE3uw/TeamPlant`;
 
 // Fetch utils
@@ -96,6 +96,26 @@ export async function loginUser(username, password) {
     if (!user || !user.Name) {
         throw new Error('ไม่พบข้อมูลพนักงานนี้');
     }
+
+    // --- Log successful login to GAS ---
+    try {
+        fetch(newPartSaveUrl, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({
+                action: 'login',
+                userId: user.IDRec,
+                userName: user.Name,
+                userPlant: user.Plant || localStorage.getItem('userPlant') || '-',
+                status: 'SUCCESS'
+            })
+        });
+    } catch (e) {
+        console.error("Login logging failed:", e);
+    }
+    // ------------------------------------
+
     return user;
 }
 

@@ -360,12 +360,21 @@ export function useAppData() {
             // 2. Background Fetch to GAS
             const gasUrl = 'https://script.google.com/macros/s/AKfycbycEiGdjEFmLSPSqgBUBBntG0OnaatLTkNozlZTn0RRgZHiuL9HCWisIsmMqth9Dzrv/exec';
 
+            // Get current user for logging
+            let userStr = '-';
+            try {
+                const u = JSON.parse(localStorage.getItem('user'));
+                userStr = u?.Name || u?.IDRec || '-';
+            } catch (e) {}
+
+            const logPayload = { ...payload, user: userStr };
+
             try {
                 await fetch(gasUrl, {
                     method: 'POST',
                     mode: 'no-cors',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `action=insertRequest&payload=${encodeURIComponent(JSON.stringify(payload))}`
+                    body: `action=insertRequest&payload=${encodeURIComponent(JSON.stringify(logPayload))}`
                 });
                 return true;
             } catch (err) {

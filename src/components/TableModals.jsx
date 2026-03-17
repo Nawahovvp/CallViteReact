@@ -316,7 +316,7 @@ export function OtherPlantModal({ isOpen, onClose, material, description, plantS
 }
 
 // ===== Status Edit Modal (StatusX / สถานะอะไหล่) =====
-export function StatusEditModal({ isOpen, onClose, row, allData, onSaved }) {
+export function StatusEditModal({ isOpen, onClose, row, allData, onSaved, currentUser }) {
     const [selectedStatus, setSelectedStatus] = useState('');
     const [savingAction, setSavingAction] = useState(null);
 
@@ -352,7 +352,8 @@ export function StatusEditModal({ isOpen, onClose, row, allData, onSaved }) {
             ticketNumber: ticket,
             material: material,
             statusCall: row.StatusX || "",
-            status: actionType === 'delete' ? "DELETE" : selectedStatus
+            status: actionType === 'delete' ? "DELETE" : selectedStatus,
+            user: currentUser?.Name || currentUser?.IDRec || "Unknown"
         };
 
         try {
@@ -417,7 +418,7 @@ export function StatusEditModal({ isOpen, onClose, row, allData, onSaved }) {
 // ===== Project Modal (StatusGroup click) =====
 const PROJECT_STATUS_OPTIONS = ["SPACIAL", "รอทดแทน"];
 
-export function ProjectModal({ isOpen, onClose, row, onSaved }) {
+export function ProjectModal({ isOpen, onClose, row, onSaved, currentUser }) {
     const [selectedStatusCall, setSelectedStatusCall] = useState('SPACIAL');
     const [projectInput, setProjectInput] = useState('');
     const [savingAction, setSavingAction] = useState(null);
@@ -444,7 +445,8 @@ export function ProjectModal({ isOpen, onClose, row, onSaved }) {
             ticketNumber: ticket,
             statusCall: selectedStatusCall,
             project: projectInput,
-            status: actionType === 'delete' ? "DELETE" : "SAVE"
+            status: actionType === 'delete' ? "DELETE" : "SAVE",
+            user: currentUser?.Name || currentUser?.IDRec || "Unknown"
         };
 
         try {

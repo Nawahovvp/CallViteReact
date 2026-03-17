@@ -550,12 +550,14 @@ function App() {
             row={statusEditModal.row}
             allData={allData}
             onSaved={handleStatusEditSaved}
+            currentUser={currentUser}
           />
           <ProjectModal
             isOpen={spacialModal.open}
             onClose={() => setSpacialModal({ open: false, row: null })}
             row={spacialModal.row}
             onSaved={handleSpacialSaved}
+            currentUser={currentUser}
           />
           <TimelineModal
             isOpen={timelineModal.open}

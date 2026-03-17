@@ -354,16 +354,11 @@ export function processRawData(
         r["Vipa"] = vipaStock[mat] !== undefined ? vipaStock[mat] : "";
         if (r["Vipa"] === 0 || r["Vipa"] === "0") r["Vipa"] = "";
 
-        // Nawa (นวนคร): Combine stock and requested quantity
+        // Nawa (นวนคร): Stock quantity from SAP
         r["Nawa"] = nawaStock[mat] !== undefined ? nawaStock[mat] : "";
         if (r["Nawa"] === 0 || r["Nawa"] === "0") r["Nawa"] = "";
 
-        // Add optimistic request quantities to Nawa if they exist
         const reqQty = reqQ[mat];
-        if (reqQty !== undefined && reqQty > 0) {
-            const currentNawa = parseFloat(r["Nawa"]) || 0;
-            r["Nawa"] = currentNawa + reqQty;
-        }
 
         r["PO"] = poQ[mat] !== undefined ? poQ[mat] : "-";
         r["PR"] = prQ[mat] !== undefined ? prQ[mat] : "";
