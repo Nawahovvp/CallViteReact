@@ -9,7 +9,7 @@ export function useAppData() {
     const [lastUpdated, setLastUpdated] = useState(null);
 
     // Single-value filters (matching original call.js behavior)
-    const [rawSources, setRawSources] = useState({ nawaRawData: [], poRawData: [], prRawData: [] });
+    const [rawSources, setRawSources] = useState({ nawaRawData: [], poRawData: [], prRawData: [], engData: [] });
     const [searchTerm, setSearchTerm] = useState('');
     const [dashboardFilter, setDashboardFilter] = useState(null); // null = show all
     const [teamPlantFilter, setTeamPlantFilter] = useState('');
@@ -34,7 +34,8 @@ export function useAppData() {
                 newPartData,
                 projectData,
                 updateData,
-                teamPlantData
+                teamPlantData,
+                engData
             } = await fetchAllData();
 
             const now = new Date();
@@ -80,10 +81,11 @@ export function useAppData() {
                 plantStockData,
                 newPartData,
                 projectData,
-                teamPlantData
+                teamPlantData,
+                engData
             );
             setProcessedData(processed);
-            setRawSources({ nawaRawData: nawaData, poRawData: poData, prRawData: prData, plantStockData: plantStockData });
+            setRawSources({ nawaRawData: nawaData, poRawData: poData, prRawData: prData, plantStockData: plantStockData, engData: engData });
 
             // Clear optimistic caches after successful fetch — sheet data is now source of truth
             localStorage.removeItem('app_cached_requestQuantities');
@@ -131,6 +133,7 @@ export function useAppData() {
                     row["Brand"], row["Call Type"], row["Team"],
                     cleanTP, row["ค้างหน่วยงาน"], row["Material"],
                     row["Description"], row["Nawa"], row["Vipa"],
+                    row["Request"], row["EngQty"],
                     row["QtyPlant"], row["OtherPlant"], row["คลังตอบ"],
                     row["UserAns"], row["วันที่ตอบ"], row["StatusCall"]
                 ];
@@ -302,6 +305,7 @@ export function useAppData() {
         summary,
         availableFilters,
         rawSources,
+        engData: rawSources.engData,
         // Single-select filters
         teamPlantFilter, setTeamPlantFilter,
         pendingUnitFilter, setPendingUnitFilter,

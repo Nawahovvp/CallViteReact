@@ -10,7 +10,7 @@ import GroupCards from './components/GroupCards';
 import ControlPanel from './components/ControlPanel';
 import DataTable from './components/DataTable';
 import { DetailModal, ActionModal, GraphModal, SummaryModal, SpareSummaryModal, OutsideRequestModal, StickerModal, printStickers, UpdateGuideModal } from './components/Modals';
-import { PoDetailsModal, PrDetailsModal, OtherPlantModal, StatusEditModal, ProjectModal, TimelineModal } from './components/TableModals';
+import { PoDetailsModal, PrDetailsModal, OtherPlantModal, StatusEditModal, ProjectModal, TimelineModal, EngDetailsModal } from './components/TableModals';
 
 import { useAppData } from './hooks/useAppData';
 import { PLANT_MAPPING, exportToCSV } from './utils/helpers';
@@ -62,6 +62,7 @@ function App() {
     searchTerm, setSearchTerm,
     dashboardFilter, setDashboardFilter,
     gmFilter, setGmFilter,
+    engData,
     applyDashboardFilter,
     refreshData,
     refreshDataBackground,
@@ -89,6 +90,7 @@ function App() {
   const [timelineModal, setTimelineModal] = useState({ open: false, row: null });
   const [outsideRequestModal, setOutsideRequestModal] = useState({ open: false, row: null });
   const [stickerModal, setStickerModal] = useState({ open: false, row: null });
+  const [engModal, setEngModal] = useState({ open: false, row: null });
   const [updateGuideOpen, setUpdateGuideOpen] = useState(false);
 
   const handleSort = (key) => {
@@ -194,6 +196,7 @@ function App() {
   const handleStatusXClick = (row) => setStatusEditModal({ open: true, row });
   const handleStatusGroupClick = (row) => setSpacialModal({ open: true, row });
   const handleDetailClick = (row) => setTimelineModal({ open: true, row });
+  const handleEngClick = (row) => setEngModal({ open: true, row });
   const handleNawaClick = (row) => {
     const userStr = localStorage.getItem('user');
     const user = userStr ? JSON.parse(userStr) : {};
@@ -509,6 +512,7 @@ function App() {
                 onStatusXClick={handleStatusXClick}
                 onStatusGroupClick={handleStatusGroupClick}
                 onDetailClick={handleDetailClick}
+                onEngClick={handleEngClick}
                 onNawaClick={handleNawaClick}
                 onTicketClick={handleTicketClick}
               />
@@ -604,6 +608,12 @@ function App() {
             isOpen={stickerModal.open}
             onClose={() => setStickerModal({ open: false, row: null })}
             row={stickerModal.row}
+          />
+          <EngDetailsModal
+            isOpen={engModal.open}
+            onClose={() => setEngModal({ open: false, row: null })}
+            row={engModal.row}
+            engData={engData}
           />
           <UpdateGuideModal
             isOpen={updateGuideOpen}

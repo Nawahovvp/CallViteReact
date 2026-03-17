@@ -80,6 +80,7 @@ export const TABLE_COLUMNS = [
     { key: 'Nawa', label: 'นวนคร' },
     { key: 'Vipa', label: 'วิภาวดี' },
     { key: 'Request', label: 'นอกรอบ' },
+    { key: 'EngQty', label: 'ช่าง' },
     { key: 'QtyPlant', label: 'คลังพื้นที่' },
     { key: 'OtherPlant', label: 'พื้นที่อื่น' },
     { key: 'PendingStockDays', label: 'ค้างStock' },
@@ -256,6 +257,39 @@ function computePlantStockQuantities(data) {
     return { byPlant, byMaterial };
 }
 
+function computeEngQuantities(engDataList) {
+    const byPlant = {};
+    if (!Array.isArray(engDataList)) return byPlant;
+    
+    engDataList.forEach(item => {
+        const plant = item.plant;
+        const data = item.data;
+        if (!Array.isArray(data)) return;
+        
+        data.forEach(row => {
+            const material = normalizeMaterial(row["Material"] || "");
+            if (!material) return;
+            
+            const qtyRaw = row["จำนวน"] || row["Qty"] || 0;
+            const qty = parseFloat((qtyRaw + "").replace(/,/g, ''));
+            const team = (row["หน่วยงาน"] || row["Team"] || "").toString().trim();
+
+            if (!isNaN(qty) && qty > 0) {
+                const key = `${plant}_${material}`;
+                if (!byPlant[key]) {
+                    byPlant[key] = { qty: 0, teams: new Set() };
+                }
+                byPlant[key].qty += qty;
+                if (team) {
+                    byPlant[key].teams.add(team);
+                }
+            }
+        });
+    });
+    
+    return byPlant;
+}
+
 // Logic to process raw data and merge with new limits/projects
 export function calculateStockPendingInfo(row) {
     const pendingUnit = row["ค้างหน่วยงาน"] || "";
@@ -321,7 +355,8 @@ export function processRawData(
     plantStockData,
     newPartData,
     projectData,
-    teamPlantData
+    teamPlantData,
+    engData
 ) {
     // 1. Precalculate dictionaries
     const { byMaterial: reqQ, byPlant: reqByPlant } = computeRequestQuantities(requestData);
@@ -330,6 +365,7 @@ export function processRawData(
     const vipaStock = computeStockQuantities(vipaData);
     const nawaStock = computeStockQuantities(nawaData);
     const { byPlant: plantStock, byMaterial: otherPlantStock } = computePlantStockQuantities(plantStockData);
+    const engByPlant = computeEngQuantities(engData);
 
     const mainSapMap = new Map();
     if (Array.isArray(mainSapData)) {
@@ -427,8 +463,20 @@ export function processRawData(
             const pKey = `${plantCode}_${mat}`;
             const qty = plantStock[pKey];
             r["QtyPlant"] = qty !== undefined && qty > 0 ? qty : "";
+
+            const eKey = `${plantCode}_${mat}`;
+            const engInfo = engByPlant[eKey];
+            if (engInfo && engInfo.qty > 0) {
+                r["EngQty"] = engInfo.qty;
+                const rowTeam = (r["Team"] || "").toString().trim();
+                r["hasMatchingEngTeam"] = rowTeam && engInfo.teams.has(rowTeam);
+            } else {
+                r["EngQty"] = "";
+                r["hasMatchingEngTeam"] = false;
+            }
         } else {
             r["QtyPlant"] = "";
+            r["EngQty"] = "";
         }
 
         // OtherPlant

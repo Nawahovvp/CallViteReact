@@ -77,9 +77,6 @@ export default function AppHeader({ user, onLogout, lastUpdated }) {
                             </div>
                         </div>
                         <div className="sheet-actions">
-                            <button className="header-button ghost" onClick={() => { }}>
-                                <i className="fas fa-adjust"></i><span>ธีม</span>
-                            </button>
                             <button className="header-button danger" onClick={handleLogout}>
                                 <i className="fas fa-sign-out-alt"></i><span>ออกจากระบบ</span>
                             </button>

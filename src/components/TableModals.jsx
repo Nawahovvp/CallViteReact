@@ -214,6 +214,99 @@ export function PrDetailsModal({ isOpen, onClose, material, description, prRawDa
     );
 }
 
+// ===== Eng Details Modal (ช่าง) =====
+export function EngDetailsModal({ isOpen, onClose, row, engData }) {
+    const details = useMemo(() => {
+        if (!isOpen || !row || !engData) return [];
+        const mat = normalizeMaterial(row["Material"]);
+        
+        // Find plantCode
+        let teamPlant = row["ศูนย์พื้นที่"] || row["TeamPlant"];
+        let plantCode = null;
+        if (teamPlant) {
+            const tp = teamPlant.toString().trim();
+            plantCode = PLANT_MAPPING[tp] || PLANT_MAPPING[`Stock ${tp}`] || PLANT_MAPPING[tp.replace(/^Stock\s+/i, '')];
+        }
+        
+        if (!plantCode) return [];
+
+        // Find the specific plant data in engDataList
+        const plantEntry = engData.find(item => item.plant === plantCode);
+        if (!plantEntry || !Array.isArray(plantEntry.data)) return [];
+
+        return plantEntry.data.filter(engRow => {
+            const rMat = normalizeMaterial(engRow["Material"] || "");
+            const qty = parseFloat((engRow["จำนวน"] || engRow["Qty"] || "0").toString().replace(/,/g, ''));
+            return rMat === mat && !isNaN(qty) && qty > 0;
+        });
+    }, [isOpen, row, engData]);
+
+    if (!isOpen || !row) return null;
+
+    return (
+        <div className="modal" style={{ zIndex: 1100 }}>
+            <div className="premium-modal-content" style={{ maxWidth: '800px' }}>
+                <div className="premium-modal-header">
+                    <h3><i className="fas fa-user-cog" style={{ marginRight: 10 }}></i> รายละเอียดช่าง</h3>
+                    <span className="premium-modal-close" onClick={onClose}>&times;</span>
+                </div>
+                <div className="premium-modal-body">
+                    <div className="modal-info-bar">
+                        <div className="modal-info-item">
+                            <span className="modal-info-label">Material:</span>
+                            <span className="modal-info-value">{row["Material"]}</span>
+                        </div>
+                        <div className="modal-info-item">
+                            <span className="modal-info-label">Description:</span>
+                            <span className="modal-info-value">{getDesc(row)}</span>
+                        </div>
+                    </div>
+
+                    {details.length === 0 ? (
+                        <div style={{ textAlign: 'center', padding: '40px 0', color: '#888' }}>
+                            <i className="fas fa-user-slash" style={{ fontSize: 48, display: 'block', marginBottom: 10, opacity: 0.3 }}></i>
+                            ไม่พบรายละเอียดข้อมูลช่างสำหรับศูนย์นี้
+                        </div>
+                    ) : (
+                        <div className="compact-table-wrapper">
+                            <table className="compact-table">
+                                <thead>
+                                    <tr>
+                                        <th style={{ width: '150px' }}>Employee ID</th>
+                                        <th>ชื่อช่าง</th>
+                                        <th style={{ textAlign: 'center', width: '100px' }}>จำนวน</th>
+                                        <th>หน่วยงาน</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {details.map((item, i) => (
+                                        <tr key={i}>
+                                            <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{item["Employee ID"] || item["ID"] || "-"}</td>
+                                            <td>{item["ชื่อ"] || item["Name"] || "-"}</td>
+                                            <td style={{ textAlign: 'center', fontWeight: 'bold', color: 'var(--info-color)' }}>
+                                                {(item["จำนวน"] || item["Qty"] || "0").toLocaleString()}
+                                            </td>
+                                            <td>
+                                                {item["หน่วยงาน"] && row["Team"] && item["หน่วยงาน"].toString().trim() === row["Team"].toString().trim() ? (
+                                                    <span className="request-pill" style={{ backgroundColor: '#fd7e14', color: '#fff', fontSize: '0.85rem' }}>
+                                                        {item["หน่วยงาน"]}
+                                                    </span>
+                                                ) : (
+                                                    item["หน่วยงาน"] || "-"
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 // ===== OtherPlant Details Modal =====
 export function OtherPlantModal({ isOpen, onClose, material, description, plantStockData }) {
     const plantDetails = useMemo(() => {

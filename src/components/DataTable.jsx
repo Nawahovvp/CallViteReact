@@ -22,7 +22,8 @@ export default function DataTable({
     onStatusGroupClick,
     onDetailClick,
     onNawaClick,
-    onTicketClick
+    onTicketClick,
+    onEngClick
 }) {
     const dataWithGroup = React.useMemo(() => {
         let lastTicket = null;
@@ -156,6 +157,13 @@ export default function DataTable({
                                         {/* Request */}
                                         <td data-column="Request" style={{ textAlign: 'center' }}>
                                             {requestVal > 0 ? (<span className="request-pill">{row['Request']}</span>) : ''}
+                                        </td>
+                                        {/* EngQty (ช่าง) */}
+                                        <td data-column="EngQty" style={{ textAlign: 'center' }}>
+                                            {pf(row['EngQty']) > 0 ? (
+                                                <span className="request-pill" style={{ backgroundColor: row['hasMatchingEngTeam'] ? '#fd7e14' : '#17a2b8', color: '#fff', cursor: 'pointer' }}
+                                                    onClick={(e) => { e.stopPropagation(); onEngClick?.(row); }}>{row['EngQty']}</span>
+                                            ) : ''}
                                         </td>
                                         {/* QtyPlant */}
                                         <td data-column="QtyPlant" style={{ textAlign: 'center' }}>
