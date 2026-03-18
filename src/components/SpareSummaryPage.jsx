@@ -1,10 +1,12 @@
 import React, { useState, useMemo } from 'react';
 import { getDesc, normalizeMaterial } from '../utils/helpers';
 import { PoDetailsModal, PrDetailsModal, OtherPlantModal } from './TableModals';
+import { syncSummaryToGoogleSheet } from '../services/api';
 
 export default function SpareSummaryPage({ data = [], rawSources = {}, isLoading, onClose }) {
     const [prgFilter, setPrgFilter] = useState('');
     const [supplierFilter, setSupplierFilter] = useState('');
+    const [isSyncing, setIsSyncing] = useState(false);
 
     const handlePrgChange = (val) => {
         setPrgFilter(val);
@@ -347,6 +349,48 @@ export default function SpareSummaryPage({ data = [], rawSources = {}, isLoading
         link.click();
     };
 
+    const handleSync = async () => {
+        if (!displayRows || displayRows.length === 0) return;
+        if (!window.confirm('คุณต้องการอัปเดตข้อมูลรายการนี้ไปยัง Google Sheet ใช่หรือไม่?')) return;
+        
+        setIsSyncing(true);
+        try {
+            const syncData = displayRows.map(matDesc => {
+                const [material, description] = matDesc.split('|');
+                const d = pivotData[matDesc];
+                const detail = poDetailMap[material] || {};
+                
+                const rowObj = {
+                    Material: material,
+                    Description: description,
+                    PRG: prgMap[material] || '-',
+                    PR: prMap[normalizeMaterial(material)] || 0,
+                    PO: poMap[material] || 0,
+                    DeliveryDate: detail.delivDate || '-',
+                    PODocument: detail.poDoc || '-',
+                    Supplier: detail.supplier || '-',
+                    QuantityDeliv: detail.qtyDeliv || 0,
+                    NawaStock: nawaMap[material] || 0,
+                    TotalPending: d.total
+                };
+                
+                pendingUnits.forEach(u => {
+                    rowObj[u] = d[u] || 0;
+                });
+                
+                return rowObj;
+            });
+
+            await syncSummaryToGoogleSheet(syncData);
+            alert('อัปเดตข้อมูลไปยัง Google Sheet สำเร็จแล้ว');
+        } catch (err) {
+            console.error("Sync failed", err);
+            alert('การอัปเดตข้อมูลล้มเหลว: ' + err.message);
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
     return (
         <div className="spare-page-container" style={{ padding: '20px', backgroundColor: 'var(--bg-color)', height: '100vh', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
             <div className="premium-modal-content" style={{ width: '100%', margin: '0', animation: 'none', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -387,6 +431,14 @@ export default function SpareSummaryPage({ data = [], rawSources = {}, isLoading
                         </div>
 
                         <div style={{ display: 'flex', gap: 10 }}>
+                            <button 
+                                onClick={handleSync} 
+                                className="action-button" 
+                                style={{ background: '#0d6efd', opacity: isSyncing ? 0.7 : 1, cursor: isSyncing ? 'not-allowed' : 'pointer' }}
+                                disabled={isSyncing}
+                            >
+                                {isSyncing ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-sync-alt"></i>} Sync to Sheet
+                            </button>
                             <button onClick={exportCSV} className="action-button" style={{ background: '#198754' }}>
                                 <i className="fas fa-file-csv"></i> Export CSV
                             </button>
