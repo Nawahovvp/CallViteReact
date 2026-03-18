@@ -460,8 +460,15 @@ export function processRawData(
         r["IDPlant"] = PLANT_MAPPING[pendingUnit] || "";
 
         if (plantCode) {
-            const pKey = `${plantCode}_${mat}`;
-            const qty = plantStock[pKey];
+            let qty;
+            if (plantCode === "0326") {
+                qty = vipaStock[mat];
+            } else if (plantCode === "0301") {
+                qty = nawaStock[mat];
+            } else {
+                const pKey = `${plantCode}_${mat}`;
+                qty = plantStock[pKey];
+            }
             r["QtyPlant"] = qty !== undefined && qty > 0 ? qty : "";
 
             const eKey = `${plantCode}_${mat}`;
