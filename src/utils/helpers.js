@@ -561,8 +561,13 @@ export function processRawData(
         const rows = ticketGroups[ticket];
         let statusCall = "รอของเข้า";
 
+        const HIGH_PRIORITY_STATUSES = ["เบิกนวนคร", "เบิกวิภาวดี", "ระหว่างขนส่ง"];
+
         // Define priorities and calculate StatusCall
         const rowStatuses = rows.map(r => {
+            if (HIGH_PRIORITY_STATUSES.includes(r.StatusX)) {
+                return r.StatusX;
+            }
             const mat = normalizeMaterial(r["Material"]);
             const key = `${ticket}_${mat}`;
             const overridenStatusObj = newPartMap.get(key);
@@ -573,7 +578,9 @@ export function processRawData(
         const validStatuses = rowStatuses.filter(s => s !== "แจ้งCodeผิด");
         const statusesToEval = validStatuses.length > 0 ? validStatuses : rowStatuses;
 
-        if (projectMap.has(ticket)) {
+        const hasHighPriority = rows.some(r => HIGH_PRIORITY_STATUSES.includes(r.StatusX));
+
+        if (projectMap.has(ticket) && !hasHighPriority) {
             const proj = projectMap.get(ticket);
             if (proj.statusCall) {
                 statusCall = proj.statusCall === "Project" ? "SPACIAL" : proj.statusCall;
@@ -688,7 +695,7 @@ export function processRawData(
             // Override with custom status if it exists for this specific row (Ticket + Material)
             const mat = normalizeMaterial(r["Material"]);
             const compositeKey = `${ticket}_${mat}`;
-            if (newPartMap.has(compositeKey)) {
+            if (newPartMap.has(compositeKey) && !HIGH_PRIORITY_STATUSES.includes(r.StatusX)) {
                 const customStatus = newPartMap.get(compositeKey).Status;
                 // DO NOT override StatusCall here, as it should remain the group-level status
                 r.StatusX = customStatus;    // Override StatusX so filtering/sorting works
