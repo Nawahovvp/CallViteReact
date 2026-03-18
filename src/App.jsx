@@ -453,7 +453,7 @@ function App() {
                 <AnalyticsCards
                   data={summary}
                   onOpenGraph={() => setGraphOpen(true)}
-                  onOpenSpareSummary={() => window.open('?page=spare-summary', '_blank')}
+                  onOpenSpareSummary={() => window.open('?page=spare-summary&autosync=true', '_blank')}
                   onOver7Click={handleOver7Click}
                   onWaitingResponseClick={handleWaitingResponseClick}
                   onMaxCardClick={handleMaxCardClick}

@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { getDesc, normalizeMaterial } from '../utils/helpers';
 import { PoDetailsModal, PrDetailsModal, OtherPlantModal } from './TableModals';
 import { syncSummaryToGoogleSheet } from '../services/api';
@@ -7,6 +7,8 @@ export default function SpareSummaryPage({ data = [], rawSources = {}, isLoading
     const [prgFilter, setPrgFilter] = useState('');
     const [supplierFilter, setSupplierFilter] = useState('');
     const [isSyncing, setIsSyncing] = useState(false);
+    const [hasAutoSynced, setHasAutoSynced] = useState(false);
+    const [showSuccessToast, setShowSuccessToast] = useState(false);
 
     const handlePrgChange = (val) => {
         setPrgFilter(val);
@@ -205,6 +207,62 @@ export default function SpareSummaryPage({ data = [], rawSources = {}, isLoading
         });
     }, [computedData, prgFilter, supplierFilter]);
 
+    const handleSync = async (skipConfirm = false) => {
+        if (!displayRows || displayRows.length === 0) return;
+        if (!skipConfirm && !window.confirm('คุณต้องการอัปเดตข้อมูลรายการนี้ไปยัง Google Sheet ใช่หรือไม่?')) return;
+        
+        setIsSyncing(true);
+        try {
+            const syncData = displayRows.map(matDesc => {
+                const [material, description] = matDesc.split('|');
+                const d = pivotData[matDesc];
+                const detail = poDetailMap[material] || {};
+                
+                const rowObj = {
+                    Material: material,
+                    Description: description,
+                    PRG: prgMap[material] || '-',
+                    PR: prMap[normalizeMaterial(material)] || 0,
+                    PO: poMap[material] || 0,
+                    DeliveryDate: detail.delivDate || '-',
+                    PODocument: detail.poDoc || '-',
+                    Supplier: detail.supplier || '-',
+                    QuantityDeliv: detail.qtyDeliv || 0,
+                    NawaStock: nawaMap[material] || 0,
+                    TotalPending: d.total
+                };
+                
+                pendingUnits.forEach(u => {
+                    rowObj[u] = d[u] || 0;
+                });
+                
+                return rowObj;
+            });
+
+            await syncSummaryToGoogleSheet(syncData);
+            setShowSuccessToast(true);
+            setTimeout(() => setShowSuccessToast(false), 4000);
+        } catch (err) {
+            console.error("Sync failed", err);
+            alert('การอัปเดตข้อมูลล้มเหลว: ' + err.message);
+        } finally {
+            setIsSyncing(false);
+        }
+    };
+
+    useEffect(() => {
+        const queryParams = new URLSearchParams(window.location.search);
+        const shouldAutoSync = queryParams.get('autosync') === 'true';
+        
+        if (shouldAutoSync && !isLoading && displayRows.length > 0 && !hasAutoSynced) {
+            const timer = setTimeout(() => {
+                handleSync(true); // true to skip confirm
+                setHasAutoSynced(true);
+            }, 2000);
+            return () => clearTimeout(timer);
+        }
+    }, [isLoading, displayRows, hasAutoSynced]);
+
     if (isLoading && (!data || data.length === 0)) {
         return (
             <div className="spare-page-container" style={{
@@ -349,48 +407,6 @@ export default function SpareSummaryPage({ data = [], rawSources = {}, isLoading
         link.click();
     };
 
-    const handleSync = async () => {
-        if (!displayRows || displayRows.length === 0) return;
-        if (!window.confirm('คุณต้องการอัปเดตข้อมูลรายการนี้ไปยัง Google Sheet ใช่หรือไม่?')) return;
-        
-        setIsSyncing(true);
-        try {
-            const syncData = displayRows.map(matDesc => {
-                const [material, description] = matDesc.split('|');
-                const d = pivotData[matDesc];
-                const detail = poDetailMap[material] || {};
-                
-                const rowObj = {
-                    Material: material,
-                    Description: description,
-                    PRG: prgMap[material] || '-',
-                    PR: prMap[normalizeMaterial(material)] || 0,
-                    PO: poMap[material] || 0,
-                    DeliveryDate: detail.delivDate || '-',
-                    PODocument: detail.poDoc || '-',
-                    Supplier: detail.supplier || '-',
-                    QuantityDeliv: detail.qtyDeliv || 0,
-                    NawaStock: nawaMap[material] || 0,
-                    TotalPending: d.total
-                };
-                
-                pendingUnits.forEach(u => {
-                    rowObj[u] = d[u] || 0;
-                });
-                
-                return rowObj;
-            });
-
-            await syncSummaryToGoogleSheet(syncData);
-            alert('อัปเดตข้อมูลไปยัง Google Sheet สำเร็จแล้ว');
-        } catch (err) {
-            console.error("Sync failed", err);
-            alert('การอัปเดตข้อมูลล้มเหลว: ' + err.message);
-        } finally {
-            setIsSyncing(false);
-        }
-    };
-
     return (
         <div className="spare-page-container" style={{ padding: '20px', backgroundColor: 'var(--bg-color)', height: '100vh', display: 'flex', flexDirection: 'column', boxSizing: 'border-box' }}>
             <div className="premium-modal-content" style={{ width: '100%', margin: '0', animation: 'none', flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -431,14 +447,6 @@ export default function SpareSummaryPage({ data = [], rawSources = {}, isLoading
                         </div>
 
                         <div style={{ display: 'flex', gap: 10 }}>
-                            <button 
-                                onClick={handleSync} 
-                                className="action-button" 
-                                style={{ background: '#0d6efd', opacity: isSyncing ? 0.7 : 1, cursor: isSyncing ? 'not-allowed' : 'pointer' }}
-                                disabled={isSyncing}
-                            >
-                                {isSyncing ? <i className="fas fa-spinner fa-spin"></i> : <i className="fas fa-sync-alt"></i>} Sync to Sheet
-                            </button>
                             <button onClick={exportCSV} className="action-button" style={{ background: '#198754' }}>
                                 <i className="fas fa-file-csv"></i> Export CSV
                             </button>
@@ -603,6 +611,39 @@ export default function SpareSummaryPage({ data = [], rawSources = {}, isLoading
                 description={otherPlantModal.row?.["Description"]}
                 plantStockData={rawSources.plantStockData}
             />
+
+            {/* Premium success toast */}
+            {showSuccessToast && (
+                <div style={{
+                    position: 'fixed', bottom: '30px', left: '50%', transform: 'translateX(-50%)',
+                    zIndex: 9999, animation: 'sp-toast-in 0.5s cubic-bezier(0.18, 0.89, 0.32, 1.28) both'
+                }}>
+                    <div style={{
+                        background: 'rgba(25, 135, 84, 0.95)', backdropFilter: 'blur(10px)',
+                        padding: '16px 28px', borderRadius: '16px', color: '#fff',
+                        display: 'flex', alignItems: 'center', gap: '15px',
+                        boxShadow: '0 15px 35px rgba(0,0,0,0.2), 0 5px 15px rgba(25, 135, 84, 0.3)',
+                        border: '1px solid rgba(255,255,255,0.2)'
+                    }}>
+                        <div style={{
+                            width: '32px', height: '32px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center'
+                        }}>
+                            <i className="fas fa-check" style={{ fontSize: '16px' }}></i>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column' }}>
+                            <span style={{ fontWeight: 700, fontSize: '15px', letterSpacing: '0.3px' }}>อัปเดตข้อมูลสำเร็จ!</span>
+                            <span style={{ fontSize: '12px', opacity: 0.9 }}>ข้อมูลถูกส่งไปยัง Google Sheet เรียบร้อยแล้ว</span>
+                        </div>
+                    </div>
+                    <style>{`
+                        @keyframes sp-toast-in {
+                            from { transform: translate(-50%, 100px); opacity: 0; }
+                            to { transform: translate(-50%, 0); opacity: 1; }
+                        }
+                    `}</style>
+                </div>
+            )}
         </div>
     );
 }
